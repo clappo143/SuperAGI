@@ -16,7 +16,12 @@ class GoogleSerpApiWrap:
         self.extractor = WebpageExtractor()
 
     def search_run(self, query):
-        results = asyncio.run(self.fetch_serper_results(query=query))
+        results = asyncio.run(self.fetch_serper_results(query=query, search_type="search"))
+        response = self.process_response(results)
+        return response
+
+    def news_run(self, query):
+        results = asyncio.run(self.fetch_serper_results(query=query, search_type="news"))
         response = self.process_response(results)
         return response
 

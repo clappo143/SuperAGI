@@ -14,18 +14,20 @@ import json
 class GoogleSerpSchema(BaseModel):
     query: str = Field(
         ...,
-        description="The search query for Google SERP.",
+        description="The search (_execute) or news (news_execute) query for Google SERP.",
     )
 
 
-'''Google search using serper.dev. Use server.dev api keys'''
+'''Google search (_execute) and news (news_execute) using serper.dev. Use server.dev api keys'''
 class GoogleSerpTool(BaseTool):
     llm: Optional[BaseLlm] = None
     name = "GoogleSerp"
     description = (
         "A tool for performing a Google SERP search and extracting snippets and webpages."
+        "It can also fetch news results related to a given query."
         "Input should be a search query."
     )
+
     args_schema: Type[GoogleSerpSchema] = GoogleSerpSchema
 
     class Config:
@@ -35,20 +37,50 @@ class GoogleSerpTool(BaseTool):
         api_key = get_config("SERP_API_KEY")
         serp_api = GoogleSerpApiWrap(api_key)
         response = serp_api.search_run(query)
-        summary = self.summarise_result(query, response["snippets"])
-        if len(response["links"]) > 0:
-            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in response["links"][:3])
+        summary, links = self.summarise_result(query, response["snippets"], response["links"])
+        if len(links) > 0: 
+            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])   
         return summary
 
-    def summarise_result(self, query, snippets):
-        summarize_prompt = """Summarize the following text `{snippets}`
-            Write a concise or as descriptive as necessary and attempt to
-            answer the query: `{query}` as best as possible. Use markdown formatting for
-            longer responses."""
+    def news_execute(self, query: str) -> tuple:
+        api_key = get_config("SERP_API_KEY")
+        serp_api = GoogleSerpApiWrap(api_key)
+        response = serp_api.news_run(query)
+        summary, links = self.summarise_result(query, response["snippets"], response["links"])
+        if len(links) > 0:
+            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3]) 
+        return summary
+
+    def summarise_result(self, query, snippets, links):
+        summarize_prompt = """Review the following text `{snippets}`and links:
+        {links}
+        - A) Provide a summarised list of the results, including Titles, Author or Publication, Date and URL. 
+        - B) Write a concise or as descriptive as necessary summary and attempt to
+            answer the query: `{query}` as best as possible based on the snippets and links.
+        EXAMPLE RESPONSE: 
+        [Summary of key snippets]
+        
+        - Title: How to Bake Chocolate Chip Cookies  
+        - Author: Betty Crocker
+        - Date: 24 March 2019
+        - Publication: AllRecipes
+        - URL: https://www.allrecipes.com/recipe/9956/best-chocolate-chip-cookies/
+        
+        [Summary of link content] 
+        
+        - Title: The Science of Baking the Perfect Cookie
+        - Date: 3 May 2020
+        - Publication: The New York Times
+        - URL: https://www.nytimes.com/2020/05/03/dining/science-perfect-chocolate-chip-cookie.html
+        
+        [Summary of link content]
+        
+        In summary, based on the Google search results, snippets and links, to bake chocolate chip cookies...  """
 
         summarize_prompt = summarize_prompt.replace("{snippets}", str(snippets))
         summarize_prompt = summarize_prompt.replace("{query}", query)
+        summarize_prompt = summarize_prompt.replace("{links}", str(links))
 
         messages = [{"role": "system", "content": summarize_prompt}]
         result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)
-        return result["content"]
+        return result["content"], links 
