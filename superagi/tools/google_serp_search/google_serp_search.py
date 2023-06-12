@@ -58,7 +58,7 @@ class GoogleSerpTool(BaseTool):
         return summary
 
     def news_execute(self, query: str) -> tuple:
-        api_key = get_config("SERP_API_KEY")
+        api_key = self.get_tool_config("SERP_API_KEY")
         serp_api = GoogleSerpApiWrap(api_key)
         response = serp_api.news_run(query)
         summary, links = self.summarise_result(query, response["snippets"], response["links"])
