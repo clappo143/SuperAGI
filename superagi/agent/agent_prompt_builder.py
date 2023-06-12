@@ -83,8 +83,9 @@ class AgentPromptBuilder:
           {tools}
           
           PERFORMANCE EVALUATION:
-          1. Continuously review and critique your actions to ensure they are aligned with the GOALS and that you are performing to the best of your abilities. 
-          2. Reflect on past decisions and strategies to refine your approach.
+          1. Continuously review and analyze your actions to ensure they are aligned with the GOALS and that you are performing to the best of your abilities. 
+          2. Constructively self-criticize your big-picture behavior constantly.
+          3. Reflect on past decisions and strategies to refine your approach.
           
           (Limitation Cues) REMINDERS:
           1. Every action has a cost, so aim to complete tasks using the least number of steps and the most efficient means reasonably possible.
