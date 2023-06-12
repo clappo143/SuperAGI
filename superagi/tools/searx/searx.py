@@ -23,21 +23,49 @@ class SearxSearchTool(BaseTool):
     class Config:
         arbitrary_types_allowed = True
 
+    
     def _execute(self, query: str) -> tuple:
-        snippets = search_results(query)
-        summary = self.summarise_result(query, snippets)
-
+        response = search_results(query)
+        summary, links = self.summarise_result(query, response["snippets"], response["links"])
+        if len(links) > 0: 
+            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])   
         return summary
 
-    def summarise_result(self, query, snippets):
-        summarize_prompt = """Summarize the following text `{snippets}`
-            Write a concise or as descriptive as necessary and attempt to
+    def summarise_result(self, query, snippets, links):
+        summarize_prompt = """Review the following text `{snippets}`and links:
+        {links}
+        - A) Provide a summarised list of the results:
+        `{snippets}` 
+        Include Titles, Author/Publication, Date and URL. 
+        
+        - B) If relevant to the task, attempt to answer the query: `{query}` as best as possible based on the snippets and links.
+        
+        EXAMPLE RESPONSE: 
+        [Summary of key snippets]
+        
+        - Title: How to Bake Chocolate Chip Cookies  
+        - Author: Betty Crocker
+        - Date: 24 March 2019
+        - Publication: AllRecipes
+        - URL: https://www.allrecipes.com/recipe/9956/best-chocolate-chip-cookies/
+        
+        [Summary of link content] 
+        
+        - Title: The Science of Baking the Perfect Cookie
+        - Date: 3 May 2020
+        - Publication: The New York Times
+        - URL: https://www.nytimes.com/2020/05/03/dining/science-perfect-chocolate-chip-cookie.html
+        
+        [Summary of link content]
+        
+        Write a concise or as descriptive as necessary and attempt to
             answer the query: `{query}` as best as possible. Use markdown formatting for
             longer responses."""
 
         summarize_prompt = summarize_prompt.replace("{snippets}", str(snippets))
         summarize_prompt = summarize_prompt.replace("{query}", query)
+        summarize_prompt = summarize_prompt.replace("{links}", str(links))
 
         messages = [{"role": "system", "content": summarize_prompt}]
         result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)
-        return result["content"]
+        return result["content"], links 
