@@ -28,17 +28,8 @@ class SearxSearchTool(BaseTool):
         arbitrary_types_allowed = True
 
     
-    def search_results(self, query):
-        results = scrape_results(search(query))
-        if results:
-            snippets = [str(result) for result in results]
-            links = [result['link'] for result in results]
-            return {"snippets": snippets, "links": links}
-        else:
-            return {"snippets": [], "links": []}
-
-    def _execute(self, query: str, language: str) -> tuple:
-        response = search_results(query, language)
+    def _execute(self, query: str) -> tuple:
+        response = search_results(query)
         summary, links = self.summarise_result(query, response["snippets"], response["links"])
         if len(links) > 0: 
             return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])   
@@ -80,5 +71,4 @@ class SearxSearchTool(BaseTool):
 
         messages = [{"role": "system", "content": summarize_prompt}]
         result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)
-        return result["content"], links 
-    
+        return result["content"]
