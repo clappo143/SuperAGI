@@ -120,12 +120,29 @@ class SuperAgi:
         return [], history
 
 
+    def calculate_max_tokens(self):
+        # Get the length of the conversation history
+        history_length = len(self.full_message_history)
+
+        # Calculate the max_tokens value based on the history length
+        if history_length < 10:
+            max_tokens = 400
+        elif history_length < 50:
+            max_tokens = 800
+        else:
+            max_tokens = 1200
+
+        # Ensure the max_tokens value is within the valid range
+        max_tokens = max(400, min(max_tokens, TokenCounter.token_limit(self.llm.get_model())))
+
+        return max_tokens
+
     def execute(self, template_step: AgentTemplateStep):
         session = Session()
         agent_execution_id = self.agent_config["agent_execution_id"]
         task_queue = TaskQueue(str(agent_execution_id))
 
-        token_limit = TokenCounter.token_limit(self.llm.get_model())
+        token_limit = self.calculate_max_tokens()
         agent_feeds = self.fetch_agent_feeds(session, self.agent_config["agent_execution_id"], self.agent_config["agent_id"])
         current_calls = 0
         if len(agent_feeds) <= 0:
