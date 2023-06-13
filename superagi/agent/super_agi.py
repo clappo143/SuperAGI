@@ -143,6 +143,9 @@ class SuperAgi:
         task_queue = TaskQueue(str(agent_execution_id))
 
         token_limit = self.calculate_max_tokens()
+        if token_limit < 1:
+            raise ValueError(f"Invalid token limit: {token_limit}. The token limit must be at least 1.")
+
         agent_feeds = self.fetch_agent_feeds(session, self.agent_config["agent_execution_id"], self.agent_config["agent_id"])
         current_calls = 0
         if len(agent_feeds) <= 0:
@@ -157,13 +160,13 @@ class SuperAgi:
             base_token_limit = TokenCounter.count_message_tokens(messages, self.llm.get_model())
             full_message_history = [{'role': role, 'content': feed} for role, feed in agent_feeds]
             past_messages, current_messages = self.split_history(full_message_history,
-                                                                 token_limit - base_token_limit - max_token_limit)
+                                                                token_limit - base_token_limit - max_token_limit)
             for history in current_messages:
                 agent_execution_feed = AgentExecutionFeed(agent_execution_id=self.agent_config["agent_execution_id"],
-                                                          agent_id=self.agent_config["agent_id"],
-                                                          feed=history["content"],
-                                                          role=history["role"],
-                                                          extra_info="Summarized History")
+                                                        agent_id=self.agent_config["agent_id"],
+                                                        feed=history["content"],
+                                                        role=history["role"],
+                                                        extra_info="Summarized History")
                 session.add(agent_execution_feed)
                 session.commit()
                 messages.append({"role": history["role"], "content": history["content"]})
