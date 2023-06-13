@@ -126,14 +126,14 @@ class SuperAgi:
 
         # Calculate the max_tokens value based on the history length
         if history_length < 10:
-            max_tokens = 400
+            max_tokens = 2000
         elif history_length < 50:
-            max_tokens = 800
+            max_tokens = 2500
         else:
-            max_tokens = 1200
+            max_tokens = 3000
 
         # Ensure the max_tokens value is within the valid range
-        max_tokens = max(400, min(max_tokens, TokenCounter.token_limit(self.llm.get_model())))
+        max_tokens = max(800, min(max_tokens, TokenCounter.token_limit(self.llm.get_model())))
 
         return max_tokens
 
@@ -151,7 +151,7 @@ class SuperAgi:
         if len(agent_feeds) <= 0:
             task_queue.clear_tasks()
         messages = []
-        max_token_limit = 600
+        max_token_limit = 400
         # adding history to the messages
         if template_step.history_enabled:
             prompt = self.build_agent_prompt(template_step.prompt, task_queue=task_queue, max_token_limit=max_token_limit)
