@@ -158,9 +158,12 @@ class SuperAgi:
             messages.append({"role": "system", "content": prompt})
             messages.append({"role": "system", "content": f"The current time and date is {time.strftime('%c')}"})
             base_token_limit = TokenCounter.count_message_tokens(messages, self.llm.get_model())
-            full_message_history = [{'role': role, 'content': feed} for role, feed in agent_feeds]
-            past_messages, current_messages = self.split_history(full_message_history,
-                                                                token_limit - base_token_limit - max_token_limit)
+            remaining_tokens = token_limit - base_token_limit - max_token_limit
+            if remaining_tokens < 1:
+                raise ValueError(f"Invalid remaining tokens: {remaining_tokens}. The remaining tokens must be at least 1.")
+            current_full_message_history = self.full_message_history.copy()
+            current_full_message_history.extend(messages)  # Update the copy with the new messages
+            past_messages, current_messages = self.split_history(current_full_message_history, remaining_tokens)
             for history in current_messages:
                 agent_execution_feed = AgentExecutionFeed(agent_execution_id=self.agent_config["agent_execution_id"],
                                                         agent_id=self.agent_config["agent_id"],
@@ -194,6 +197,8 @@ class SuperAgi:
         total_tokens = current_tokens + TokenCounter.count_message_tokens(response, self.llm.get_model())
         self.update_agent_execution_tokens(current_calls, total_tokens)
 
+        if 'content' not in response:
+            raise KeyError("'content' key not found in the response.")
         if response['content'] is None:
             raise RuntimeError(f"Failed to get response from llm")
         assistant_reply = response['content']
