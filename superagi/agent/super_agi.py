@@ -158,6 +158,9 @@ class SuperAgi:
             messages.append({"role": "system", "content": prompt})
             messages.append({"role": "system", "content": f"The current time and date is {time.strftime('%c')}"})
             base_token_limit = TokenCounter.count_message_tokens(messages, self.llm.get_model())
+            print(f"base_token_limit: {base_token_limit}")
+            print(f"token_limit: {token_limit}")
+            print(f"max_token_limit: {max_token_limit}")
             remaining_tokens = token_limit - base_token_limit - max_token_limit
             if remaining_tokens < 1:
                 raise ValueError(f"Invalid remaining tokens: {remaining_tokens}. The remaining tokens must be at least 1.")
