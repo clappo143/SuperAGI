@@ -8,7 +8,7 @@ from superagi.helper.webpage_extractor import WebpageExtractor
 
 
 class GoogleSerpApiWrap:
-    def __init__(self, api_key, num_results=10, num_pages=1, num_extracts=3):
+    def __init__(self, api_key, num_results=25, num_pages=1, num_extracts=3):
         self.api_key = api_key
         self.num_results = num_results
         self.num_pages = num_pages
@@ -20,7 +20,7 @@ class GoogleSerpApiWrap:
         response = self.process_response(results)
         return response
 
-    async def fetch_serper_results(self, query: str, search_type: str) -> dict[str, Any]:
+    async def fetch_serper_results(self, query: str, search_type: str = "search") -> dict[str, Any]:
         headers = {
             "X-API-KEY": self.api_key or "",
             "Content-Type": "application/json",
@@ -37,6 +37,8 @@ class GoogleSerpApiWrap:
     def process_response(self, results) -> str:
         snippets: List[str] = []
         links: List[str] = []
+        people_also_ask: List[str] = []
+        related_searches: List[str] = []
 
         if results.get("answerBox"):
             answer_values = []
@@ -63,15 +65,24 @@ class GoogleSerpApiWrap:
             for attribute, value in knowledge_graph.get("attributes", {}).items():
                 snippets.append(f"{title} {attribute}: {value}.")
 
-        for result in results["organic"][:self.num_results]:
-            if "snippet" in result:
-                snippets.append(result["snippet"])
-            if "link" in result and len(links) < self.num_results:
-                links.append(result["link"])
-            for attribute, value in result.get("attributes", {}).items():
-                snippets.append(f"{attribute}: {value}.")
+        if "organic" in results:
+            for result in results["organic"][:self.num_results]:
+                if "snippet" in result:
+                    snippets.append(result["snippet"])
+                if "link" in result and len(links) < self.num_results:
+                    links.append(result["link"])
+                for attribute, value in result.get("attributes", {}).items():
+                    snippets.append(f"{attribute}: {value}.")
+
+        if "peopleAlsoAsk" in results:
+            for item in results["peopleAlsoAsk"]:
+                people_also_ask.append(item["question"])
+                people_also_ask.append(item["answer"])
+
+        if "relatedSearches" in results:
+            related_searches = results["relatedSearches"]
 
         if len(snippets) == 0:
-            return {"snippets": "No good Google Search Result was found", "links": []}
+            return {"snippets": "No good Google Search Result was found", "links": [], "peopleAlsoAsk": people_also_ask, "relatedSearches": related_searches}
 
-        return {"links": links, "snippets": snippets}
+        return {"links": links, "snippets": snippets, "peopleAlsoAsk": people_also_ask, "relatedSearches": related_searches}
