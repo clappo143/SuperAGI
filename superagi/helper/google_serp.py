@@ -15,14 +15,12 @@ class GoogleSerpApiWrap:
         self.num_extracts = num_extracts
         self.extractor = WebpageExtractor()
 
-    def search_run(self, query):
-        results = asyncio.run(self.fetch_serper_results(query=query))
+    def search_run(self, query, search_type="search"):
+        results = asyncio.run(self.fetch_serper_results(query=query, search_type=search_type))
         response = self.process_response(results)
         return response
 
-    async def fetch_serper_results(self,
-                                   query: str, search_type: str = "search"
-                                   ) -> dict[str, Any]:
+    async def fetch_serper_results(self, query: str, search_type: str) -> dict[str, Any]:
         headers = {
             "X-API-KEY": self.api_key or "",
             "Content-Type": "application/json",

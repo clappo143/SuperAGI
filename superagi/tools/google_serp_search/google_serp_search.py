@@ -36,7 +36,7 @@ class GoogleSerpTool(BaseTool):
     def _execute(self, query: str, search_type: str = "search") -> tuple:
         api_key = get_config("SERP_API_KEY")
         serp_api = GoogleSerpApiWrap(api_key)
-        response = serp_api.run(query, search_type)
+        response = serp_api.search_run(query, search_type)
         summary, links = self.summarise_result(query, response["snippets"], response["links"])
         if len(links) > 0:
             return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])
