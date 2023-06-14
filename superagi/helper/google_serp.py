@@ -37,6 +37,7 @@ class GoogleSerpApiWrap:
                 return search_results
 
     def process_response(self, results) -> str:
+        logging.info(f"Raw results from API: {results}")
         snippets: List[str] = []
         links: List[str] = []
         people_also_ask: List[str] = []
