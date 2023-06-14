@@ -30,10 +30,20 @@ class SearxSearchTool(BaseTool):
         return summary
 
     def summarise_result(self, query, snippets):
-        summarize_prompt = """Summarize the following text `{snippets}`
-            Write a concise or as descriptive as necessary and attempt to
-            answer the query: `{query}` as best as possible. Use markdown formatting for
-            longer responses."""
+        summarize_prompt = """Review the following text `{snippets}` 
+            Povide a structured list of the results, including Titles, Author or Publication, Date and URL. 
+            
+                EXAMPLE RESPONSE: 
+                - Title: How to Bake Chocolate Chip Cookies  
+                - Author: Betty Crocker
+                - Date: 24 March 2019
+                - Publication: AllRecipes
+                - URL: https://www.allrecipes.com/recipe/9956/best-chocolate-chip-cookies/
+            
+            Write a summary and attempt to answer the query: `{query}` based on the snippets and links.
+            
+                EXAMPLE RESPONSE: 
+                In summary, based on the Google search results, snippets and links, to bake chocolate chip cookies...  """
 
         summarize_prompt = summarize_prompt.replace("{snippets}", str(snippets))
         summarize_prompt = summarize_prompt.replace("{query}", query)

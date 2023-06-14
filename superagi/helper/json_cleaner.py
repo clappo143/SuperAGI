@@ -78,3 +78,13 @@ class JsonCleaner:
             json_string += '}' * (open_braces_count - closed_braces_count)
 
         return json_string
+    
+    @classmethod
+    def escape_double_quotes(cls, json_string: str) -> str:
+        # Convert the JSON string back to a Python object
+        obj = json.loads(json_string)
+
+        # Convert the Python object back to a JSON string, this time with double quotes escaped
+        escaped_json_string = json.dumps(obj)
+
+        return escaped_json_string
