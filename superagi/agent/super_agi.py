@@ -126,14 +126,14 @@ class SuperAgi:
 
         # Calculate the max_tokens value based on the history length
         if history_length < 10:
-            max_tokens = 2000
-        elif history_length < 50:
             max_tokens = 2500
+        elif history_length < 50:
+            max_tokens = 3500
         else:
-            max_tokens = 3000
+            max_tokens = 4000
 
         # Ensure the max_tokens value is within the valid range
-        max_tokens = max(800, min(max_tokens, TokenCounter.token_limit(self.llm.get_model())))
+        max_tokens = max(450, min(max_tokens, TokenCounter.token_limit(self.llm.get_model())))
 
         return max_tokens
 

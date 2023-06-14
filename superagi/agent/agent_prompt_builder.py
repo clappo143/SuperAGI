@@ -141,7 +141,7 @@ class AgentPromptBuilder:
             "tool": {"name": "tool name", "args": {"arg name": "string value"}}
         }
         
-        Your answer must be in JSON format.
+        Your answer must be in JSON format. Remember to use double quotes ("") around keys and string values, and commas (,) to separate items in arrays and objects.
         """
 
         super_agi_prompt = AgentPromptBuilder.clean_prompt(super_agi_prompt) \
