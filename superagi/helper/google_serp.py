@@ -3,6 +3,8 @@ from typing import Any, List
 
 import aiohttp
 
+import logging
+
 from superagi.config.config import get_config
 from superagi.helper.webpage_extractor import WebpageExtractor
 
@@ -26,10 +28,10 @@ class GoogleSerpApiWrap:
             "Content-Type": "application/json",
         }
         params = {"q": query,}
+        url = f"https://google.serper.dev/{search_type}"
+        logging.info(f"Making request to {url} with params {params}")
         async with aiohttp.ClientSession() as session:
-            async with session.post(
-                    f"https://google.serper.dev/{search_type}", headers=headers, params=params
-            ) as response:
+            async with session.post(url, headers=headers, params=params) as response:
                 response.raise_for_status()
                 search_results = await response.json()
                 return search_results
