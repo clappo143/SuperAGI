@@ -27,11 +27,11 @@ class GoogleSerpApiWrap:
             "X-API-KEY": self.api_key or "",
             "Content-Type": "application/json",
         }
-        params = {"q": query,}
+        data = {"q": query,}
         url = f"https://google.serper.dev/{search_type}"
-        logging.info(f"Making request to {url} with params {params}")
+        logging.info(f"Making request to {url} with data {data}")
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, params=params) as response:
+            async with session.post(url, headers=headers, json=data) as response:
                 response.raise_for_status()
                 search_results = await response.json()
                 return search_results
