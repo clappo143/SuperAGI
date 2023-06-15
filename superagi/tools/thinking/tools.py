@@ -59,4 +59,3 @@ class ThinkingTool(BaseTool):
         except Exception as e:
             print(e)
             return f"Error generating text: {e}"
-        
