@@ -8,6 +8,8 @@ from superagi.agent.agent_prompt_builder import AgentPromptBuilder
 from superagi.tools.base_tool import BaseTool
 from superagi.config.config import get_config
 from superagi.llms.base_llm import BaseLlm
+from superagi.agent.task_queue import TaskQueue
+
 from pydantic import BaseModel, Field, PrivateAttr
 
 
@@ -30,20 +32,26 @@ class ThinkingTool(BaseTool):
         arbitrary_types_allowed = True
 
 
-    def _execute(self, task_description: str):
+    def _execute(self, task_description: str, task_queue: TaskQueue):
         try:
+            last_task_details = task_queue.get_last_task_details()
+            last_task_result = last_task_details['response'] if last_task_details else 'None'
+
             prompt = """Given the following overall objective
             Objective:
             {goals} 
             
             and the following task, `{task_description}`.
             
+            The result of the last task execution was: `{last_task_result}`.
+
             Perform the task by understanding the problem, extracting variables, and being smart
             and efficient. Provide a descriptive response, make decisions yourself when
             confronted with choices and provide reasoning for ideas / decisions.
             """
             prompt = prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(self.goals))
             prompt = prompt.replace("{task_description}", task_description)
+            prompt = prompt.replace("{last_task_result}", last_task_result)
 
             messages = [{"role": "system", "content": prompt}]
             result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)
@@ -51,3 +59,4 @@ class ThinkingTool(BaseTool):
         except Exception as e:
             print(e)
             return f"Error generating text: {e}"
+        
