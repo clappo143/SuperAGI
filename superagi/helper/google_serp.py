@@ -43,6 +43,14 @@ class GoogleSerpApiWrap:
         people_also_ask: List[str] = []
         related_searches: List[str] = []
 
+        if "news" in results:
+            for result in results["news"][:self.num_results]:
+                if "snippet" in result:
+                    snippets.append(result["snippet"])
+                if "link" in result and len(links) < self.num_results:
+                    links.append(result["link"])
+                for attribute, value in result.get("attributes", {}).items():
+                    snippets.append(f"{attribute}: {value}.")
         if results.get("answerBox"):
             answer_values = []
             answer_box = results.get("answerBox", {})
