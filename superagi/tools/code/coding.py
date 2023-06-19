@@ -59,6 +59,16 @@ class CodingTool(BaseTool):
         
             Write code to accomplish the following:
             {task}
+            
+            You will output the content of each file including ALL code. Each file will follow following mark down code block format:
+            
+            FILE_NAME: {file_name}
+            ```{code_language}
+            {code}
+            ```
+            
+            You will start with the "entrypoint" file, then go to the ones that are imported by that file, and so on. 
+            Please note that the code should be fully functional. No placeholders. Include module dependency or package manager dependency definition file.
             """
             prompt = prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(self.goals))
             prompt = prompt.replace("{task}", task_description)

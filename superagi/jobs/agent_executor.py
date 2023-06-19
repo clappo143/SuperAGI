@@ -1,11 +1,14 @@
 import importlib
 from datetime import datetime, timedelta
-from fastapi import HTTPException
 
+from fastapi import HTTPException
 from sqlalchemy.orm import sessionmaker
 
+import superagi.worker
 from superagi import worker
 from superagi.agent.super_agi import SuperAgi
+from superagi.helper.encyption_helper import decrypt_data
+from superagi.lib.logger import logger
 from superagi.llms.openai import OpenAi
 from superagi.models.agent import Agent
 from superagi.models.agent_execution import AgentExecution
@@ -20,9 +23,6 @@ from superagi.models.tool import Tool
 from superagi.tools.thinking.tools import ThinkingTool
 from superagi.vector_store.embedding.openai import OpenAiEmbedding
 from superagi.vector_store.vector_factory import VectorFactory
-from superagi.helper.encyption_helper import decrypt_data
-import superagi.worker
-from superagi.lib.logger import logger
 
 engine = connect_db()
 Session = sessionmaker(bind=engine)
@@ -146,15 +146,12 @@ class AgentExecutor:
         model_api_key = AgentExecutor.get_model_api_key_from_execution(agent_execution, session)
 
         try:
-            if parsed_config["LTM_DB"] == "Pinecone":
-                memory = VectorFactory.get_vector_storage("PineCone", "super-agent-index1",
-                                                          OpenAiEmbedding(model_api_key))
-            else:
-                memory = VectorFactory.get_vector_storage("PineCone", "super-agent-index1",
-                                                          OpenAiEmbedding(model_api_key))
+            memory = VectorFactory.get_vector_storage(parsed_config["LTM_DB"], "super-agent-index1",
+                                                      OpenAiEmbedding(api_key=model_api_key), str(agent.id))
         except:
             logger.info("Unable to setup the pinecone connection...")
             memory = None
+
 
         user_tools = session.query(Tool).filter(Tool.id.in_(parsed_config["tools"])).all()
 

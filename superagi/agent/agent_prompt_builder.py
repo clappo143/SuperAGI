@@ -58,6 +58,12 @@ class AgentPromptBuilder:
 
     @classmethod
     def get_super_agi_single_prompt(cls):
+        # a = re.sub(r'}\n+\s+}', '}}', a)
+        # a = re.sub(r'"\n+\s+}', '"}', a)
+        # a = re.sub(r'\n+\s+"', '"', a)
+        # parts = a.split("\"args\": {")
+        # parts2 = parts[1].split("}}")
+
         response_format = {
             "thoughts": {
                 "text": "thought",
@@ -66,8 +72,8 @@ class AgentPromptBuilder:
                 "criticism": "constructive self-criticism",
                 "speak": "thoughts summary to say to user",
             },
-            "tool": {"name": "tool name/task name", "description": "tool or task description",
-                     "args": {"arg name": "value"}}
+            "tool": {"name": "tool name/task name",
+                     "args": {"arg name": "value(json escaped value for string type)"}}
         }
         formatted_response_format = json.dumps(response_format, indent=4)
 
@@ -82,7 +88,9 @@ class AgentPromptBuilder:
     
           CONSTRAINTS:
           {constraints}
-          
+        
+          {ltm}
+            
           TOOLS:
           {tools}
           
@@ -229,6 +237,16 @@ class AgentPromptBuilder:
         print(tools)
         tools_string = AgentPromptBuilder.add_tools_to_prompt(tools, add_finish_tool)
         super_agi_prompt = super_agi_prompt.replace("{tools}", tools_string)
+        if "{ltm}" in super_agi_prompt:
+            super_agi_prompt = super_agi_prompt.replace("{tools}", "")
+        return super_agi_prompt
+
+    @classmethod
+    def replace_ltm_variables(cls, super_agi_prompt: str, ltm: str):
+        if ltm == "":
+            super_agi_prompt = super_agi_prompt.replace("{ltm}", "")
+        else:
+            super_agi_prompt = super_agi_prompt.replace("{ltm}", "PAST HISTORY:\n```" + ltm + "```")
         return super_agi_prompt
 
     @classmethod
