@@ -88,8 +88,6 @@ class AgentPromptBuilder:
     
           CONSTRAINTS:
           {constraints}
-        
-          {ltm}
             
           TOOLS:
           {tools}
@@ -237,17 +235,15 @@ class AgentPromptBuilder:
         print(tools)
         tools_string = AgentPromptBuilder.add_tools_to_prompt(tools, add_finish_tool)
         super_agi_prompt = super_agi_prompt.replace("{tools}", tools_string)
-        if "{ltm}" in super_agi_prompt:
-            super_agi_prompt = super_agi_prompt.replace("{tools}", "")
         return super_agi_prompt
 
-    @classmethod
-    def replace_ltm_variables(cls, super_agi_prompt: str, ltm: str):
-        if ltm == "":
-            super_agi_prompt = super_agi_prompt.replace("{ltm}", "")
-        else:
-            super_agi_prompt = super_agi_prompt.replace("{ltm}", "PAST HISTORY:\n```" + ltm + "```")
-        return super_agi_prompt
+    # @classmethod
+    # def replace_ltm_variables(cls, super_agi_prompt: str, ltm: str):
+    #     if ltm == "":
+    #         super_agi_prompt = super_agi_prompt.replace("{ltm}", "")
+    #     else:
+    #         super_agi_prompt = super_agi_prompt.replace("{ltm}", "PAST HISTORY:\n```" + ltm + "```")
+    #     return super_agi_prompt
 
     @classmethod
     def replace_task_based_variables(cls, super_agi_prompt: str, current_task: str, last_task: str,
