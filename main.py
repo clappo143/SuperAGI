@@ -14,7 +14,9 @@ from pydantic import BaseModel
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+import base64
 import superagi
+import pickle
 from superagi.agent.agent_prompt_builder import AgentPromptBuilder
 from superagi.config.config import get_config
 from superagi.controllers.agent_template import router as agent_template_router
@@ -353,6 +355,56 @@ def github_login():
     github_client_id = ""
     return RedirectResponse(f'https://github.com/login/oauth/authorize?scope=user:email&client_id={github_client_id}')
 
+@app.get('/oauth-twitter')
+def twitter_oauth_handler(code: str = Query(...), Authorize: AuthJWT = Depends()):
+    client_id = "VEpWdkJqUllDNG9sRlNyaVdneWc6MTpjaQ"
+    client_secret = "s5OrqFjrGQRGrsbKvRRoLlKm_lwjzlYaz0OonFto6PGIDd94IW"
+    token_uri = "https://api.twitter.com/2/oauth2/token"
+    creds = f"{client_id}:{client_secret}"
+    encoded_creds = base64.b64encode(creds.encode("utf-8")).decode("utf-8")
+    params = {
+        'client_id': client_id,
+        'redirect_uri': 'http://localhost:3000/api/oauth-twitter',
+        'grant_type': 'authorization_code',
+        'code': code,
+        'code_verifier': 'challenge'
+    }
+    headers = {
+        'Authorization': f'Basic {encoded_creds}',
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    response = requests.post(token_uri, data=params, headers=headers)
+    response= response.json()
+    root_dir = superagi.config.config.get_config('RESOURCES_OUTPUT_ROOT_DIR')
+    file_name = "twitter_credentials.pickle"
+    final_path = file_name
+    if root_dir is not None:
+        root_dir = root_dir if root_dir.startswith("/") else os.getcwd() + "/" + root_dir
+        root_dir = root_dir if root_dir.endswith("/") else root_dir + "/"
+        final_path = root_dir + file_name
+    else:
+        final_path = os.getcwd() + "/" + file_name
+    try:
+        with open(final_path, mode="wb") as file:
+            pickle.dump(response, file)
+    except Exception as err:
+        return f"Error: {err}"
+    frontend_url = superagi.config.config.get_config("FRONTEND_URL", "http://localhost:3000")
+    return RedirectResponse(frontend_url)
+    # print("////////////////////////////")
+    # print(response)
+    # print("////////////////////////////")
+    # data = {
+    #     'client_id': client_id,
+    #     'grant_type': 'refresh_token',
+    #     'refresh_token': response["refresh_token"],
+    #     'redirect_uri': 'http://localhost:3000/api/oauth-twitter'
+    # }
+    # new_creds = requests.post(token_uri,headers=headers, data=data)
+    # new_creds = new_creds.json()
+    # print("-----------------------------")
+    # print(new_creds)
+    # print("---------------------------------")
 
 @app.get('/github-auth')
 def github_auth_handler(code: str = Query(...), Authorize: AuthJWT = Depends()):
