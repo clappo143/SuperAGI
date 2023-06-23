@@ -36,8 +36,11 @@ class SearxSearchTool(BaseTool):
         return summary
 
     def summarise_result(self, query, snippets, links):
-        summarize_prompt = """Review the following text `{snippets}` and:
-         - A) Provide a summarised list of the results: Include Titles, Author/Publication, Date and URL. 
+        summarize_prompt = """Review the following text `{snippets}`and links:
+        {links}
+        - A) Provide a summarised list of the results:
+        `{snippets}` 
+        Include Titles, Author/Publication, Date and URL. 
         
         - B) Provide a concise summary of the collective results and their relevance to the task. Evaluate the performance of the`{query}` and consider possible imporovements.
         
@@ -71,4 +74,5 @@ class SearxSearchTool(BaseTool):
 
         messages = [{"role": "system", "content": summarize_prompt}]
         result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)
-        return result["content"]
+        return result["content"], links 
+    
