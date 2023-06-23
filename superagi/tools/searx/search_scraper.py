@@ -116,5 +116,9 @@ def scrape_results(html):
 
 
 def search_results(query):
-    '''Returns a text summary of the search results via the SearchResult.__str__ method'''
-    return "\n\n".join(list(map(lambda x: str(x), scrape_results(search(query)))))
+    '''Returns a dictionary with "snippets" and "links" as keys'''
+    results = scrape_results(search(query))
+    return {
+        "snippets": [str(result) for result in results],
+        "links": [result['link'] for result in results]
+    }
