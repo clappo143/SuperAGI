@@ -38,6 +38,21 @@ class ReadFileTool(BaseTool):
         input_root_dir = get_config('RESOURCES_INPUT_ROOT_DIR')
         output_root_dir = get_config('RESOURCES_OUTPUT_ROOT_DIR')
         final_path = None
+         # Check in input_root_dir
+        for dirpath, dirnames, filenames in os.walk(input_root_dir):
+            if file_name in filenames:
+                final_path = os.path.join(dirpath, file_name)
+                break
+
+        # If not found, check in output_root_dir
+        if final_path is None:
+            for dirpath, dirnames, filenames in os.walk(output_root_dir):
+                if file_name in filenames:
+                    final_path = os.path.join(dirpath, file_name)
+                    break
+
+        if final_path is None:
+            raise FileNotFoundError(f"File '{file_name}' not found.")
 
         if input_root_dir is not None:
             input_root_dir = input_root_dir if input_root_dir.startswith("/") else os.getcwd() + "/" + input_root_dir
