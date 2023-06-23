@@ -12,6 +12,14 @@ class SearxSearchSchema(BaseModel):
     )
 
 class SearxSearchTool(BaseTool):
+    """
+    Searx Search tool
+
+    Attributes:
+        name : The name.
+        description : The description.
+        args_schema : The args schema.
+    """
     llm: Optional[BaseLlm] = None
     name = "SearxSearch"
     description = (
@@ -25,6 +33,15 @@ class SearxSearchTool(BaseTool):
 
     
     def _execute(self, query: str) -> tuple:
+        """
+        Execute the Searx search tool.
+
+        Args:
+            query : The query to search for.
+
+        Returns:
+            Snippets and links from the Searx search.
+        """
         response = search_results(query)
         summary, links = self.summarise_result(query, response["snippets"], response["links"])
         if len(links) > 0: 
@@ -32,6 +49,16 @@ class SearxSearchTool(BaseTool):
         return summary
 
     def summarise_result(self, query, snippets, links):
+        """
+        Summarise the result of the Searx search.
+
+        Args:
+            query : The query to search for.
+            snippets : The snippets from the Searx search.
+
+        Returns:
+            A summary of the result.
+        """
         summarize_prompt = """Review the following text `{snippets}`and links:
         {links}
         - A) Provide a summarised list of the results:
