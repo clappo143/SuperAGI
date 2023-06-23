@@ -72,7 +72,7 @@ class AgentPromptBuilder:
         formatted_response_format = json.dumps(response_format, indent=4)
 
         super_agi_prompt = """You are SuperAGI an AI assistant to solve complex problems. Your decisions must always be made independently without seeking user assistance.
-          Play to your strengths as an LLM; adopt simple strategies to achieve the user-defined GOALS, prioritising efficacy and efficiency over perfection.
+          Adopt simple strategies to achieve the user-defined GOALS, prioritising efficacy and efficiency over perfection.
           Your short term memory is limited, be sure to immediately save important information to files.
           If you have completed all your tasks or reached end state, make sure to use the "finish" TOOL.
     
@@ -100,7 +100,8 @@ class AgentPromptBuilder:
           Response Format:
           {response_format}
           
-          Ensure the response can be parsed by Python json.loads.
+          
+          Remember to format your response as JSON. To ensure the response can be parsed by Python json.loads, use double quotes ("") around keys and string values, and commas (,) to separate items in arrays and objects. IMPORTANT: When embedding a JSON string within another JSON string, always escape double quotes. For example, use \" instead of ". This applies to keys and string values in your JSON. Incorrect formatting will result in an error.
         """
 
         super_agi_prompt = AgentPromptBuilder.clean_prompt(super_agi_prompt).replace("{response_format}",
@@ -117,12 +118,10 @@ class AgentPromptBuilder:
         {task_instructions}
 
         Construct a sequence of actions, not exceeding 3 steps, to achieve this goal.
-        
-        Submit your response as a formatted ARRAY of strings, suitable for utilization with JSON.parse().
-        
+                
         Example: ["{{TASK-1}}", "{{TASK-2}}"].
 
-
+        Remember to format your response as JSON, using double quotes ("") around keys and string values, and commas (,) to separate items in arrays and objects. When embedding a JSON string within another JSON string, ALWAYS escape double quotes (e.g. use \" instead of ".) This applies to keys and string values in your JSON.
 
         """
 
@@ -161,6 +160,8 @@ class AgentPromptBuilder:
         }
         
         Your answer must be something that JSON.parse() can read, and nothing else.
+        Always escape double quotes when embedding a JSON string within another JSON string. 
+
         """
 
         super_agi_prompt = AgentPromptBuilder.clean_prompt(super_agi_prompt) \
@@ -187,7 +188,7 @@ class AgentPromptBuilder:
         Don't create any task if it is already covered in incomplete or completed tasks.
         Ensure your new task are not deviated from completing the goal.
          
-        Your answer should be an array of strings that can be used with JSON.parse() and NOTHING ELSE. Return empty array if no new task is required.
+        Your answer should be an array of strings that can be used with JSON.parse(). Remember to use double quotes ("") around keys and string values, and commas (,) to separate items in arrays and objects. If a JSON object is being used as a string in another JSON object, you need to escape the double quotes. Return empty array if no new task is required.
         """
         return {"prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt),
                 "variables": ["goals", "instructions", "last_task", "last_task_result", "pending_tasks"]}
@@ -209,7 +210,7 @@ class AgentPromptBuilder:
             Remove if any tasks are unnecessary or duplicate incomplete tasks. Remove tasks if they are already covered in completed tasks.
             Remove tasks if it does not help in achieving the main goal.
 
-            Your answer should be an array of strings that can be used with JSON.parse() and NOTHING ELSE.
+            Your answer should be an array of strings that can be used with JSON.parse(). Remember to use double quotes ("") around keys and string values, and commas (,) to separate items in arrays and objects. To use a JSON object as a string in another JSON object, you need to escape the double quotes. Return empty array if no new task is required.
             """
         return {"prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt),
                 "variables": ["goals", "instructions", "last_task", "last_task_result", "pending_tasks"]}

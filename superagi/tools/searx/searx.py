@@ -85,7 +85,7 @@ class SearxSearchTool(BaseTool):
         
         [Summary of link content]
         
-        Write a concise or as descriptive as necessary and attempt to
+        Write a concise summary of the snippets and attempt to
             answer the query: `{query}` as best as possible. Use markdown formatting for
             longer responses."""
 
