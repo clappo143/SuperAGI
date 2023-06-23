@@ -82,10 +82,16 @@ def scrape_results(html):
         header = result_div.find(["h4", "h3"])
         if header is None:
             continue
-        link = header.find("a")["href"]
+        link_element = header.find("a")
+        if link_element is None:
+            continue
+        link = link_element["href"]
         title = header.text.strip()
 
-        description = clean_whitespace(result_div.find("p").text)
+        description_element = result_div.find("p")
+        if description_element is None:
+            continue
+        description = clean_whitespace(description_element.text)
 
         # Needed to work on multiple versions of Searx
         sources_container = result_div.find(
