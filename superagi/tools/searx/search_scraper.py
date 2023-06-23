@@ -96,9 +96,13 @@ def scrape_results(html):
         for s in source_spans:
             sources.append(s.text.strip())
 
-        result = SearchResult(
-            id=n, title=title, link=link, description=description, sources=sources
-        )
+        result = {
+            'id': n,
+            'title': title,
+            'link': link,
+            'description': description,
+            'sources': sources
+        }
         result_list.append(result)
         n += 1
 
