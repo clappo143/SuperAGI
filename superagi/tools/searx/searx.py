@@ -28,6 +28,12 @@ class SearxSearchTool(BaseTool):
         arbitrary_types_allowed = True
 
     
+    def search_results(self, query):
+        results = scrape_results(search(query))
+        snippets = [str(result) for result in results]
+        links = [result['link'] for result in results]
+        return {"snippets": snippets, "links": links}
+
     def _execute(self, query: str) -> tuple:
         response = search_results(query)
         summary, links = self.summarise_result(query, response["snippets"], response["links"])
