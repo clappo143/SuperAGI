@@ -4,7 +4,7 @@ from typing import Type, Optional
 from pydantic import BaseModel, Field
 
 from superagi.helper.resource_helper import ResourceHelper
-from superagi.resource_manager.manager import ResourceManager
+from superagi.resource_manager.file_manager import FileManager
 from superagi.tools.base_tool import BaseTool
 
 
@@ -26,7 +26,12 @@ class ReadFileTool(BaseTool):
     agent_id: int = None
     args_schema: Type[BaseModel] = ReadFileSchema
     description: str = "Reads the file content in a specified location"
-    resource_manager: Optional[ResourceManager] = None
+    resource_manager: Optional[FileManager] = None
+
+    def _update_path(self, path: str) -> str:
+        if "{agent_id}" in path:
+            path = path.replace("{agent_id}", str(self.agent_id))
+        return path
 
     def _execute(self, file_name: str):
         """
@@ -38,24 +43,20 @@ class ReadFileTool(BaseTool):
         Returns:
             The file content and the file name
         """
+        input_root_dir = ResourceHelper.get_root_input_dir()
         output_root_dir = ResourceHelper.get_root_output_dir()
 
-        final_path = ResourceHelper.get_root_input_dir() + file_name
-        if "{agent_id}" in final_path:
-            final_path = final_path.replace("{agent_id}", str(self.agent_id))
+        # Attempt to locate the file in the input directory
+        final_path = self._update_path(input_root_dir + file_name)
 
-        if final_path is None or not os.path.exists(final_path):
-            if output_root_dir is not None:
-                final_path = ResourceHelper.get_root_output_dir() + file_name
-                if "{agent_id}" in final_path:
-                    final_path = final_path.replace("{agent_id}", str(self.agent_id))
+        if not os.path.exists(final_path) and output_root_dir is not None:
+            # If not found, attempt to locate the file in the output directory
+            final_path = self._update_path(output_root_dir + file_name)
 
-        if final_path is None:
+        if not os.path.exists(final_path):
             raise FileNotFoundError(f"File '{file_name}' not found.")
 
         with open(final_path, 'r') as file:
             file_content = file.read()
-        max_length = len(' '.join(file_content.split(" ")[:1000]))
-        return file_content[:max_length] + "\n File " + file_name + " read successfully."
-
-
+        file_content = ' '.join(file_content.split(" ")[:1000])  # Limit to the first 1000 words
+        return file_content + "\n File " + file_name + " read successfully."
