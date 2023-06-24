@@ -126,7 +126,7 @@ class SuperAgi:
         if len(agent_feeds) <= 0:
             task_queue.clear_tasks()
         messages = []
-        max_token_limit = 600
+        max_token_limit = 1200
         # adding history to the messages
         if workflow_step.history_enabled:
             prompt = self.build_agent_prompt(workflow_step.prompt, task_queue=task_queue,
