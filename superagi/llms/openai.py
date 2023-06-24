@@ -16,7 +16,7 @@ class OpenAi(BaseLlm):
         Args:
             api_key (str): The OpenAI API key.
             image_model (str): The image model.
-            model (str): The model.
+            model (str): The model. Can be "gpt-4", "gpt-3.5-turbo", or "gpt-4-32k".
             temperature (float): The temperature.
             max_tokens (int): The maximum number of tokens.
             top_p (float): The top p.

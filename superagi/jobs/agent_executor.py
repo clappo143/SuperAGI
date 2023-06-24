@@ -226,8 +226,8 @@ class AgentExecutor:
                 tool.goals = parsed_config["goal"]
             if hasattr(tool, 'instructions'):
                 tool.instructions = parsed_config["instruction"]
-            if hasattr(tool, 'llm') and (parsed_config["model"] == "gpt4" or parsed_config["model"] == "gpt-3.5-turbo"):
-                tool.llm = OpenAi(model="gpt-3.5-turbo", api_key=model_api_key, temperature=0.3)
+            if hasattr(tool, 'llm') and (parsed_config["model"] == "gpt4" or parsed_config["model"] == "gpt-3.5-turbo" or parsed_config["model"] == "gpt-4-32k"):
+                tool.llm = OpenAi(model="gpt-3.5-turbo", api_key=model_api_key, temperature=0.3) if parsed_config["model"] != "gpt-4-32k" else OpenAi(model="gpt-4-32k", api_key=model_api_key, temperature=0.3)
             elif hasattr(tool, 'llm'):
                 tool.llm = OpenAi(model=parsed_config["model"], api_key=model_api_key, temperature=0.3)
             if hasattr(tool, 'image_llm'):
@@ -242,7 +242,6 @@ class AgentExecutor:
 
             new_tools.append(tool)
         return tools
-
     def handle_wait_for_permission(self, agent_execution, spawned_agent, session):
         """
         Handles the wait for permission when the agent execution is waiting for permission.
