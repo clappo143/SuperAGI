@@ -63,7 +63,7 @@ class GoogleSearchTool(BaseTool):
         for webpage in webpages:
             results.append({"title": snippets[i], "body": webpage, "links": links[i]})
             i += 1
-            if TokenCounter.count_text_tokens(json.dumps(results)) > 3000:
+            if TokenCounter.count_text_tokens(json.dumps(results)) > 4500:
                 break
         summary = self.summarise_result(query, results)
         links = [result["links"] for result in results if len(result["links"]) > 0]
@@ -82,11 +82,26 @@ class GoogleSearchTool(BaseTool):
         Returns:
             A summary of the search result.
         """
-        summarize_prompt ="""Summarize the following text `{snippets}`
-            Write a concise or as descriptive as necessary and attempt to
-            answer the query: `{query}` as best as possible. Use markdown formatting for
-            longer responses."""
+        summarize_prompt = """Review the following text `{snippets}` and provide a summarised list of the results, including Titles, Author or Publication, Date and URL.
+        EXAMPLE RESPONSE: 
+        [Summary of key snippets]
+        
+        - Title: How to Bake Chocolate Chip Cookies  
+        - Author: Betty Crocker
+        - Date: 24 March 2019
+        - Publication: AllRecipes
+        - URL: https://www.allrecipes.com/recipe/9956/best-chocolate-chip-cookies/
+        
+        [Summary of link content] 
+        
+        - Title: Reuters War Blog - Wagner History
+        - Date: 3 May 2020
+        - Publication: Reuters
+        - URL: https://www.reuters.com/warblog/wagner-history.html
 
+        [Summary of link content] 
+        """
+        
         summarize_prompt = summarize_prompt.replace("{snippets}", str(snippets))
         summarize_prompt = summarize_prompt.replace("{query}", query)
 
