@@ -6,7 +6,22 @@ from pydantic import BaseModel
 from superagi.lib.logger import logger
 
 
-searx_hosts = ["https://search.ononoki.org", "https://searx.be", "https://search.us.projectsegfau.lt"]
+searx_hosts = ["https://searx.catfluori.de/", "https://search.mdosch.de/", "https://darmarit.org/searx/"]
+
+# Searx Instances here: https://searx.space/ 
+# (GPT-4 25 June) here are some instances you might want to consider:
+    # https://search.mdosch.de/
+    # https://xo.wtf/
+    # https://search.rowie.at/
+    # https://darmarit.org/searx/
+    # https://search.demoniak.ch/
+    # https://search.im-in.space/
+    # https://search.kiwitalk.de/
+    # https://searx.catfluori.de/
+    # https://searx.namejeff.xyz/
+    # https://searx.mha.fi/
+    # These instances have high TLS and CSP ratings, support HTML responses, use well-known certificate authorities, have high uptime percentages, and relatively low response times.
+    # "https://search.us.projectsegfau.lt One of the originals - worked as of 25 June, but replaced with more robust instances
 
 class SearchResult(BaseModel):
     """
