@@ -26,9 +26,12 @@ class SearxSearchTool(BaseTool):
     
     def search_results(self, query):
         results = scrape_results(search(query))
-        snippets = [str(result) for result in results]
-        links = [result['link'] for result in results]
-        return {"snippets": snippets, "links": links}
+        if results:
+            snippets = [str(result) for result in results]
+            links = [result['link'] for result in results]
+            return {"snippets": snippets, "links": links}
+        else:
+            return {"snippets": [], "links": []}
 
     def _execute(self, query: str) -> tuple:
         response = search_results(query)
