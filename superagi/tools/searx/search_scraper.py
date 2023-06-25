@@ -14,7 +14,11 @@ def get_searx_instances():
     data = response.json()
 
     # Filter out instances that are currently offline, have an HTTPS grade of 'A+' and an Observatory grade of 'A+'
-    secure_instances = [url for url, info in data.items() if info.get('status') == 'ok' and info.get('https_grade') == 'A+' and info.get('observatory_grade') == 'A+']
+    secure_instances = []
+    for url, info in data:
+        if isinstance(info, dict) and info.get('status') == 'ok' and info.get('https_grade') == 'A+' and info.get('observatory_grade') == 'A+':
+            secure_instances.append(url)
+
 
     return secure_instances
 
