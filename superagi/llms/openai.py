@@ -77,7 +77,7 @@ class OpenAi(BaseLlm):
             return {"response": response, "content": content}
         except Exception as exception:
             logger.info("Exception:", exception)
-            return {"error": exception}
+            return {"response": None, "content": f"Error: {exception}"}
 
     def generate_image(self, prompt: str, size: int = 512, num: int = 2):
         """
