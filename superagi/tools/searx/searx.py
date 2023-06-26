@@ -10,6 +10,10 @@ class SearxSearchSchema(BaseModel):
         ...,
         description="The search query for the Searx search engine.",
     )
+    language: str = Field(
+        ...,
+        description="The language for the Searx search engine.",
+    )
 
 class SearxSearchTool(BaseTool):
     llm: Optional[BaseLlm] = None
