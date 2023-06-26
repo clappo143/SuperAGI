@@ -50,7 +50,7 @@ class GoogleSearchTool(BaseTool):
         """
         api_key = get_config("GOOGLE_API_KEY")
         search_engine_id = get_config("SEARCH_ENGINE_ID")
-        num_results = 15
+        num_results = 10
         num_pages = 1
         num_extracts = 10
 
