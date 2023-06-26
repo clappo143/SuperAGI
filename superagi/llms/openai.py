@@ -9,7 +9,7 @@ from superagi.lib.logger import logger
 
 
 class OpenAi(BaseLlm):
-    def __init__(self, api_key, image_model=None, model="gpt-4", temperature=0.6, max_tokens=get_config("MAX_MODEL_TOKEN_LIMIT"), top_p=1,
+    def __init__(self, api_key, image_model=None, model="gpt-4", temperature=0.4, max_tokens=get_config("MAX_MODEL_TOKEN_LIMIT"), top_p=1,
                  frequency_penalty=0,
                  presence_penalty=0, number_of_results=1):
         """
