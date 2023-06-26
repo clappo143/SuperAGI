@@ -33,8 +33,8 @@ class SearxSearchTool(BaseTool):
         else:
             return {"snippets": [], "links": []}
 
-    def _execute(self, query: str) -> tuple:
-        response = search_results(query)
+    def _execute(self, query: str, language: str) -> tuple:
+        response = search_results(query, language)
         summary, links = self.summarise_result(query, response["snippets"], response["links"])
         if len(links) > 0: 
             return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])   

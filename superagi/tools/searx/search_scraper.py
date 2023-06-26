@@ -39,13 +39,13 @@ class SearchResult(BaseModel):
         return f"""{self.id}. {self.title} - {self.link} 
 {self.description}"""
 
-def search(query):
+def search(query, language):
     random.shuffle(searx_hosts)  # Randomize the order of instances
     for searx_url in searx_hosts:
         res = httpx.get(
-            searx_url + "/search", params={"q": query}, headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/114.0"}
+            searx_url + "/search", params={"q": query, "language": language}, headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/114.0"}
         )
-        time.sleep(1)  # delay before the next request
+        time.sleep(2)  # delay before the next request
         if res.status_code == 200:
             return res.text
         else:
@@ -117,10 +117,12 @@ def scrape_results(html):
 
     return result_list
 
-def search_results(query):
+def search_results(query, language):
     '''Returns a dictionary with "snippets" and "links" as keys'''
-    results = scrape_results(search(query))
-    return {
-        "snippets": [str(result) for result in results],
-        "links": [result['link'] for result in results]
-    }
+    results = scrape_results(search(query, language))
+    if results:
+        snippets = [str(result) for result in results]
+        links = [result['link'] for result in results]
+        return {"snippets": snippets, "links": links}
+    else:
+        return {"snippets": [], "links": []}
