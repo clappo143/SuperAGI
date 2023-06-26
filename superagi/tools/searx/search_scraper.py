@@ -1,27 +1,22 @@
 import random
-import requests
 from typing import List
 import httpx
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
+from superagi.lib.logger import logger
 import time
 
-# The delay between requests in seconds
-delay = 1
-
-def get_searx_instances():
-    response = requests.get('https://searx.space/data/instances.json')
-    data = response.json()
-
-    # Filter out instances that are currently offline, have an HTTPS grade of 'A+' and an Observatory grade of 'A+'
-    secure_instances = []
-    for url, info in data.items():
-        if isinstance(info, dict) and info.get('status') == 'ok' and info.get('https_grade') == 'A+' and info.get('observatory_grade') == 'A+':
-            secure_instances.append(url)
-
-    return secure_instances
-
-searx_hosts = get_searx_instances()
+searx_hosts = [
+    "https://searx.catfluori.de/",
+    "https://search.mdosch.de/",
+    "https://darmarit.org/searx/",
+    "https://xo.wtf/",
+    "https://search.rowie.at/",
+    "https://searx.namejeff.xyz/",
+    "https://search.demoniak.ch/",
+    # Add more instances here e.g. https://search.im-in.space/; https://search.kiwitalk.de/ ;  https://searx.mha.fi/ (See: https://searx.space/)
+    # (GPT-4 25 June) # These instances have high TLS and CSP ratings, support HTML responses, use well-known certificate authorities, have high uptime percentages, and relatively low response times.
+]
 
 class SearchResult(BaseModel):
     """
@@ -45,23 +40,18 @@ class SearchResult(BaseModel):
 {self.description}"""
 
 def search(query):
-    """
-    Gets the raw HTML of a searx search result page
+    random.shuffle(searx_hosts)  # Randomize the order of instances
+    for searx_url in searx_hosts:
+        res = httpx.get(
+            searx_url + "/search", params={"q": query}, headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/114.0"}
+        )
+        time.sleep(1)  # delay before the next request
+        if res.status_code == 200:
+            return res.text
+        else:
+            logger.info(res.status_code, searx_url)
 
-    Args:
-        query : The query to search for.
-    """
-    searx_url = random.choice(searx_hosts)
-    res = httpx.get(
-        searx_url + "/search", params={"q": query}, headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/114.0"}
-    )
-    if res.status_code != 200:
-        raise Exception(f"Searx returned {res.status_code} status code")
-
-    # Wait for the specified delay before sending the next request
-    time.sleep(delay)
-
-    return res.text
+    raise Exception("All Searx instances returned non-200 status codes")
 
 def clean_whitespace(s: str):
     """
@@ -93,7 +83,6 @@ def scrape_results(html):
     for result_div in result_divs:
         if result_div is None:
             continue
-        # Needed to work on multiple versions of Searx
         header = result_div.find(["h4", "h3"])
         if header is None:
             continue
@@ -108,7 +97,6 @@ def scrape_results(html):
             continue
         description = clean_whitespace(description_element.text)
 
-        # Needed to work on multiple versions of Searx
         sources_container = result_div.find(
             attrs={"class": "pull-right"}
         ) or result_div.find(attrs={"class": "engines"}) 
@@ -128,7 +116,6 @@ def scrape_results(html):
         n += 1
 
     return result_list
-
 
 def search_results(query):
     '''Returns a dictionary with "snippets" and "links" as keys'''
