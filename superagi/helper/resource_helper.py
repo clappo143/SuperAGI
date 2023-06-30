@@ -98,6 +98,5 @@ class ResourceHelper:
             root_dir = root_dir.replace("{agent_id}", str(agent_id))
             directory = os.path.dirname(root_dir)
             os.makedirs(directory, exist_ok=True)
-            root_dir = root_dir + str(agent_id) + "/"
         final_path = root_dir + file_name
         return final_path
