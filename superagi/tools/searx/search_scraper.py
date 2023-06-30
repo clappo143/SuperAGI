@@ -39,11 +39,23 @@ class SearchResult(BaseModel):
         return f"""{self.id}. {self.title} - {self.link} 
 {self.description}"""
 
-def search(query, language):
+def search(query: str, language: str):
+    """
+    Perform a search query using Searx search engine.
+
+    Args:
+        query (str): The search query.
+        language (str): The language of the search query as a two-letter code; e.g. Hindi = hi.
+
+    Returns:
+        The response text from the search request.
+    """
     random.shuffle(searx_hosts)  # Randomize the order of instances
     for searx_url in searx_hosts:
         res = httpx.get(
-            searx_url + "/search", params={"q": query, "language": language}, headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/114.0"}
+            searx_url + "/search",
+            params={"q": query, "language": language},
+            headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/114.0"},
         )
         time.sleep(2)  # delay before the next request
         if res.status_code == 200:
@@ -52,6 +64,7 @@ def search(query, language):
             logger.info(res.status_code, searx_url)
 
     raise Exception("All Searx instances returned non-200 status codes")
+
 
 def clean_whitespace(s: str):
     """
