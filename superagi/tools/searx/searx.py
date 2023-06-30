@@ -12,7 +12,7 @@ class SearxSearchSchema(BaseModel):
     )
     language: str = Field(
         ...,
-        description="The language for the Searx search engine.",
+        description="The language for the Searx search engine as a two letter code e.g. hi",
     )
 
 class SearxSearchTool(BaseTool):
@@ -20,7 +20,7 @@ class SearxSearchTool(BaseTool):
     name = "SearxSearch"
     description = (
         "A tool for performing a Searx search and extracting snippets and webpages."
-        "Input should be a search query."
+        "Input should be a search query. Language (en, de etc) to be provided in language field"
     )
     args_schema: Type[SearxSearchSchema] = SearxSearchSchema
 
