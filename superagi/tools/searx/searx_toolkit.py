@@ -7,8 +7,7 @@ from superagi.tools.searx.searx import SearxSearchTool
 
 class SearxSearchToolkit(BaseToolkit, ABC):
     name: str = "Searx Toolkit"
-    description: str = "Toolkit containing tools for performing Google search and extracting snippets and webpages " \
-                       "using Searx"
+    description: str = "Toolkit containing tools for performing Google search and extracting snippets and webpages using Searx"
 
     def get_tools(self) -> List[BaseTool]:
         return [SearxSearchTool()]
