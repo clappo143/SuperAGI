@@ -45,17 +45,16 @@ class SearxSearchTool(BaseTool):
         return summary
 
     def summarise_result(self, query, snippets, links):
-        summarize_prompt = """Review the following text `{snippets}`and links:
-        {links}
-        - A) Provide a summarised list of the results:
-        `{snippets}` 
-        Include Titles, Author/Publication, Date and URL. 
+        summarize_prompt = """Review the following text `{snippets}` and:
+         - A) Provide a summarised list of the results: Include Titles, Author/Publication, Date and URL. 
         
-        - B) If relevant to the task, attempt to answer the query: `{query}` as best as possible based on the snippets and links.
+        - B) Provide a concise summary of the collective results and their relevance to the task. Evaluate the performance of the`{query}` and consider possible imporovements.
         
+        ---
         EXAMPLE RESPONSE: 
         [Summary of key snippets]
         
+        A) 
         - Title: How to Bake Chocolate Chip Cookies  
         - Author: Betty Crocker
         - Date: 24 March 2019
@@ -71,9 +70,9 @@ class SearxSearchTool(BaseTool):
         
         [Summary of link content]
         
-        Write a concise or as descriptive as necessary and attempt to
-            answer the query: `{query}` as best as possible. Use markdown formatting for
-            longer responses."""
+        B)
+        The results were mainly related to baking and thus not very relevant to our use case about a criminal nicknamed 'cookie'. The current `{query}` is thus suboptimal and needs refinement. We should consider adding exclusionary operators/clauses (e.g. `cookie -baking -recipe`) for more focussed and relevant results. Alertnatively, we could try using a different TOOL.
+        """
 
         summarize_prompt = summarize_prompt.replace("{snippets}", str(snippets))
         summarize_prompt = summarize_prompt.replace("{query}", query)

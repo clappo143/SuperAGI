@@ -11,6 +11,7 @@ Task History:
 `{task_history}`
 
 Based on this, create a single task to be completed by your AI system ONLY IF REQUIRED to get closer to or fully reach your high level goal.
+Evaluate the Task History to idenitify and avoid perpetuating any unproductive loops: where tasks are repeatedly executed yet return identical or irrelevant content or errors/no results. If this happens, you need to break out of the loop by introducing a new task that uses a different tool or apporach – DO NOT perist with clearly promblematic tasks by reacreating or re-executing the task.
 Don't create any task if it is already covered in incomplete or completed tasks.
 Ensure any new tasks do not deviate from completing the goal.
 

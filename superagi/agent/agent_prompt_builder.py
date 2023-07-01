@@ -106,22 +106,7 @@ class AgentPromptBuilder:
     @classmethod
     def prioritize_tasks(cls):
         # just executed task `{last_task}` and got the result `{last_task_result}`
-        super_agi_prompt = """
-            You are a task prioritization AI assistant. 
-
-            High level goal:
-            {goals}
-
-            {task_instructions}
-
-            You have following incomplete tasks `{pending_tasks}`. You have following completed tasks `{completed_tasks}`.
-
-            Based on this, evaluate the incomplete tasks and sort them in the order of execution. In output first task will be executed first and so on.
-            Remove if any tasks are unnecessary or duplicate incomplete tasks. Remove tasks if they are already covered in completed tasks.
-            Remove tasks if it does not help in achieving the main goal.
-
-            Your answer should be an array of strings that can be used with JSON.parse() and NOTHING ELSE.
-            """
+        super_agi_prompt = PromptReader.read_agent_prompt(__file__, "prioritize_tasks.txt")
         return {"prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt),
                 "variables": ["goals", "instructions", "last_task", "last_task_result", "pending_tasks"]}
 
@@ -130,7 +115,7 @@ class AgentPromptBuilder:
                                tools: List[BaseTool], add_finish_tool: bool = True):
         super_agi_prompt = super_agi_prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(goals))
         if len(instructions) > 0 and len(instructions[0]) > 0:
-            task_str = "INSTRUCTION(Follow these instruction to decide the flow of execution and decide the next steps for achieving the task):"
+            task_str = "INSTRUCTION(Follow these instruction to determine the flow of execution and decide the next steps for achieving the task):"
             super_agi_prompt = super_agi_prompt.replace("{instructions}", "INSTRUCTION: " + '\n' +  AgentPromptBuilder.add_list_items_to_string(instructions))
             super_agi_prompt = super_agi_prompt.replace("{task_instructions}", task_str + '\n' +  AgentPromptBuilder.add_list_items_to_string(instructions))
         else:

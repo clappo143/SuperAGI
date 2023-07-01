@@ -48,8 +48,8 @@ class GoogleSearchTool(BaseTool):
         api_key = self.get_tool_config("GOOGLE_API_KEY")
         search_engine_id = self.get_tool_config("SEARCH_ENGINE_ID")
         num_results = 10
-        num_pages = 1
-        num_extracts = 10
+        num_pages = 2
+        num_extracts = 15
 
         google_search = GoogleSearchWrap(api_key, search_engine_id, num_results, num_pages, num_extracts)
         snippets, webpages, links = google_search.get_result(query)
@@ -76,26 +76,25 @@ class GoogleSearchTool(BaseTool):
             snippets (list): A list of snippets from the search.
 
         Returns:
-            A summary of the search result.
+            A summarised list of the search result.
         """
-        summarize_prompt = """Review the following text `{snippets}` and provide a summarised list of the results, including Titles, Author or Publication, Date and URL.
+        summarize_prompt = """Review the following text `{snippets}` and provide a filtered list of the results, excluding items with no meaningful relevance to the high goal/task. The list should provide Titles, Author or Publication, Date and URL for each item. Also include a brief summary of the link content for each item; provide greater detail if the item is highly relevant to the task/high goal. 
         EXAMPLE RESPONSE: 
         [Summary of key snippets]
         
-        - Title: How to Bake Chocolate Chip Cookies  
-        - Author: Betty Crocker
+        - Title: Protest and public events protocol  
         - Date: 24 March 2019
-        - Publication: AllRecipes
-        - URL: https://www.allrecipes.com/recipe/9956/best-chocolate-chip-cookies/
+        - Publication: London Metropolitan Police
+        - URL: https://www.met.police.uk/protest-protocol
         
-        [Summary of link content] 
+        Details: Official documentation; no contemporary protest information; limited task relevance.
         
-        - Title: Reuters War Blog - Wagner History
+        - Title: Reuters War Blog - Russian Meddling
         - Date: 3 May 2020
         - Publication: Reuters
-        - URL: https://www.reuters.com/warblog/wagner-history.html
+        - URL: https://www.reuters.com/warblog/russian-meddling.html
 
-        [Summary of link content] 
+        Details: Reports on Russian interference in EU countries, including some protest-related information. However, not contemporary and minimal relevance to goal.  
         """
         
         summarize_prompt = summarize_prompt.replace("{snippets}", str(snippets))
