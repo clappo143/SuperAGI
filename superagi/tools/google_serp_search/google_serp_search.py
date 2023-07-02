@@ -6,7 +6,7 @@ from superagi.llms.base_llm import BaseLlm
 from superagi.tools.base_tool import BaseTool
 import os
 
-import json
+import json5 as json 
 
 
 class GoogleSerpSchema(BaseModel):

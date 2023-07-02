@@ -1,4 +1,4 @@
-import json
+import json5
 
 from sqlalchemy import Column, Integer, String, Text
 
@@ -57,7 +57,7 @@ class AgentTemplateConfig(DBBaseModel):
             str: JSON string representation of the AgentTemplateConfig.
         """
 
-        return json.dumps(self.to_dict())
+        return json5.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_data):
@@ -71,7 +71,7 @@ class AgentTemplateConfig(DBBaseModel):
             AgentTemplateConfig: AgentTemplateConfig object created from the JSON string.
         """
 
-        data = json.loads(json_data)
+        data = json5.loads(json_data)
         return cls(
             id=data['id'],
             agent_template_id=data['agent_template_id'],

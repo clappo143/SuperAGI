@@ -1,4 +1,4 @@
-import json
+import json5 as json
 
 from sqlalchemy import Column, Integer, String, Text
 

@@ -1,4 +1,4 @@
-import json
+import json5 as json  # replace this line
 from typing import Type, Optional
 
 from pydantic import BaseModel, Field

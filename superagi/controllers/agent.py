@@ -17,7 +17,7 @@ from superagi.models.tool import Tool
 from jsonmerge import merge
 from superagi.worker import execute_agent
 from datetime import datetime
-import json
+import json5 as json 
 from sqlalchemy import func
 from superagi.helper.auth import check_auth, get_user_organisation
 

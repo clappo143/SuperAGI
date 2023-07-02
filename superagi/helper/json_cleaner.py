@@ -1,9 +1,6 @@
-import json
+import json5 as json
 import re
 from superagi.lib.logger import logger
-
-import json5
-
 
 class JsonCleaner:
 
@@ -24,7 +21,7 @@ class JsonCleaner:
             json_string = cls.remove_trailing_newline_spaces(json_string)
             json_string = cls.clean_newline_characters(json_string)
 
-            json5.loads(json_string)
+            json.loads(json_string)
             return json_string
         except (ValueError, json.JSONDecodeError) as e:
             # If the json is invalid, try to clean it up
@@ -36,7 +33,7 @@ class JsonCleaner:
             json_string = cls.clean_newline_characters(json_string)
             json_string = cls.balance_braces(json_string)
             try:
-                json5.loads(json_string)
+                json.loads(json_string)
                 return json_string
             except (ValueError, json.JSONDecodeError) as e:
                 logger.info(json_string)

@@ -1,4 +1,4 @@
-import json
+import json5 as json
 from datetime import datetime
 
 from superagi.helper.time_helper import get_time_difference

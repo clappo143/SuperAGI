@@ -1,4 +1,4 @@
-import json
+import json5 as json  # replace this line
 import re
 
 from pydantic.types import List

@@ -1,4 +1,4 @@
-import json
+import json5 as json  # replace this line
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, DateTime
