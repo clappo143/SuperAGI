@@ -29,12 +29,14 @@ class AgentOutputParser(BaseOutputParser):
         try:
             logger.info(text)
             text = JsonCleaner.check_and_clean_json(text)
+            print(f"Attempting to parse the following text as JSON5: {text}")  # Add this line
             parsed = json5.loads(text)
         except json.JSONDecodeError:
             return AgentGPTAction(
                 name="ERROR",
                 args={"error": f"Could not parse invalid json: {text}"},
             )
+
         try:
             format_prefix_yellow = "\033[93m\033[1m"
             format_suffix_yellow = "\033[0m\033[0m"
@@ -74,11 +76,11 @@ class AgentOutputParser(BaseOutputParser):
 
     def parse_tasks(self, text: str) -> AgentTasks:
         try:
-            parsed = json.loads(text, strict=False)
-        except json.JSONDecodeError:
+            parsed = json5.loads(text, strict=False)
+        except json5.JSONDecodeError:
             preprocessed_text = JsonCleaner.preprocess_json_input(text)
             try:
-                parsed = json.loads(preprocessed_text, strict=False)
+                parsed = json5.loads(preprocessed_text, strict=False)
             except Exception:
                 return AgentTasks(
                     error=f"Could not parse invalid json: {text}",
@@ -93,5 +95,4 @@ class AgentOutputParser(BaseOutputParser):
             return AgentTasks(
                 error=f"Incomplete tool args: {parsed}",
             )
-
-
+        
