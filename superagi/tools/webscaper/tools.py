@@ -34,6 +34,7 @@ class WebScraperSchema(BaseModel):
         return value
 
 
+
 class WebScraperTool(BaseTool):
     """
     Web Scraper tool
