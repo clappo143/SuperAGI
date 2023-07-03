@@ -39,7 +39,7 @@ class WebScraperTool(BaseTool):
     llm: Optional[BaseLlm] = None
     name = "WebScraperTool"
     description = (
-        "Used to scrape website URLs and extract text content. Can handle URLs for specific site searches and date range searches."
+        "Used to scrape website URLs and extract text content. Can handle **valid** URLs for specific site searches but can generate Google (with date range parameter) and Bing search queries as fallback if invalid URL is initially supplied."
     )
     args_schema: Type[WebScraperSchema] = WebScraperSchema
 
@@ -77,13 +77,15 @@ class WebScraperTool(BaseTool):
         Execute the Web Scraper tool.
 
         Args:
-            website_url : The website url to scrape.
+            website_url : The website url to scrape or a search query.
 
         Returns:
-            The text content of the website.
+            The text content of the website or search results.
         """
-        # Generate a valid URL if the input is a search query
-        if not website_url.startswith("http"):
+        # Check if the website_url is a valid URL
+        parsed_url = urllib.parse.urlparse(website_url)
+        if not (parsed_url.scheme and parsed_url.netloc):
+            # If not, treat it as a search query
             if "google" in website_url:
                 website_url = self.generate_google_search_url(website_url, site, start_date, end_date)
             elif "bing" in website_url:
@@ -92,4 +94,5 @@ class WebScraperTool(BaseTool):
         content = WebpageExtractor().extract_with_bs4(website_url)
         max_length = len(' '.join(content.split(" ")[:600]))
         return content[:max_length]
+
     
