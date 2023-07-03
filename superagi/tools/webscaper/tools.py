@@ -27,19 +27,6 @@ class WebScraperSchema(BaseModel):
         description="Optional end date for date range search. Format: MM/DD/YYYY",
     )
 
-    @validator("start_date")
-    def convert_start_date_format(cls, value):
-        if value:
-            return datetime.strptime(value, "%m/%d/%Y").strftime("%m-%d-%Y")
-        return value
-
-    @validator("end_date")
-    def convert_end_date_format(cls, value):
-        if value:
-            return datetime.strptime(value, "%m/%d/%Y").strftime("%m-%d-%Y")
-        return value
-
-
 class WebScraperTool(BaseTool):
     """
     Web Scraper tool
