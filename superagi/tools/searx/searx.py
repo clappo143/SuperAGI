@@ -4,6 +4,7 @@ from superagi.llms.base_llm import BaseLlm
 from superagi.tools.base_tool import BaseTool
 from superagi.tools.searx.search_scraper import search, search_results, scrape_results
 
+LANGUAGE_DESC = "The language for the Searx search engine as a two letter code e.g. hi"
 
 class SearxSearchSchema(BaseModel):
     query: str = Field(
@@ -12,9 +13,7 @@ class SearxSearchSchema(BaseModel):
     )  
     language: str = Field(
         ...,  
-        description="The language for the Searx search engine as a two letter code e.g. hi"
-    )
-
+        description=LANGUAGE_DESC)
 
 class SearxSearchTool(BaseTool):    
     ...

@@ -39,7 +39,7 @@ class SearchResult(BaseModel):
         return f"""{self.id}. {self.title} - {self.link} 
 {self.description}"""
 
-def search(query: str, language: str):
+def search(query: str, language: str) -> str:
     """
     Perform a search query using Searx search engine.
 
@@ -78,7 +78,7 @@ def clean_whitespace(s: str):
     """
     return " ".join(s.split())
 
-def scrape_results(html):
+def scrape_results(html: str) -> List[SearchResult]:
     """
     Converts raw HTML into a list of SearchResult objects
 
