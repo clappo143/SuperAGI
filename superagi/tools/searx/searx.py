@@ -1,21 +1,27 @@
 from typing import Type, Optional
 from pydantic import BaseModel, Field
-from superagi.llms.base_llm import BaseLlm
+from superagi.llms.base_llm import BaseLlm  
 from superagi.tools.base_tool import BaseTool
-from superagi.tools.searx.search_scraper import search, search_results, scrape_results 
+from superagi.tools.searx.search_scraper import search, search_results, scrape_results
 
 
 class SearxSearchSchema(BaseModel):
     query: str = Field(
         ...,
         description="The search query for the Searx search engine.",
-    )
+    )  
     language: str = Field(
-        ...,
-        description="The language for the Searx search engine as a two letter code e.g. hi",
+        ...,  
+        description="The language for the Searx search engine as a two letter code e.g. hi"
     )
 
-class SearxSearchTool(BaseTool):
+
+class SearxSearchTool(BaseTool):    
+    ...
+    
+    def _execute(self, query: str, language: str) -> tuple: 
+        response = search_results(query, language)
+        
     llm: Optional[BaseLlm] = None
     name = "SearxSearch"
     description = (
@@ -34,8 +40,8 @@ class SearxSearchTool(BaseTool):
         links = [result['link'] for result in results]
         return {"snippets": snippets, "links": links}
 
-    def _execute(self, query: str) -> tuple:
-        response = search_results(query)
+    def _execute(self, query: str, language: str) -> tuple: 
+        response = search_results(query, language)
         summary, links = self.summarise_result(query, response["snippets"], response["links"])
         if len(links) > 0: 
             return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])   
