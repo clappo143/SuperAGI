@@ -1,4 +1,4 @@
-import json5 as json  # replace this line
+import json5 as json 
 import re
 
 from pydantic.types import List
@@ -73,38 +73,6 @@ class AgentPromptBuilder:
         }
         formatted_response_format = json.dumps(response_format, indent=4)
 
-        super_agi_prompt = """You are SuperAGI an AI assistant to solve complex problems. Your decisions must always be made independently without seeking user assistance.
-          Adopt simple strategies to achieve the user-defined GOALS, prioritising efficacy and efficiency over perfection.
-          Your short term memory is limited, be sure to immediately save important information to files.
-          If you have completed all your tasks or reached end state, make sure to use the "finish" TOOL.
-    
-          GOALS:
-          {goals}
-    
-          CONSTRAINTS:
-          {constraints}
-          
-          TOOLS:
-          {tools}
-          
-          PERFORMANCE EVALUATION:
-          1. Continuously review and analyze your actions to ensure they are aligned with the GOALS and that you are performing to the best of your abilities. 
-          2. Constructively self-criticize your big-picture behavior constantly.
-          3. Reflect on past decisions and strategies to refine your approach.
-          
-          (Limitation Cues) REMINDERS:
-          1. Every action has a cost, so aim to complete tasks using the least number of steps and the most efficient means reasonably possible.
-          2. There are limits to what you can achieve with the TOOLS and resources available to you; be mindful of this and adopt/revise strategies accordingly.   
-          3. Avoid unproductive iterations/loops. If you become stuck in a recurring cycle of retrieving identical information and/or producing identical outputs, shift focus to reviewing, organising and outputting the collected data as per user GOALS instead. 
-          
-          I should only respond in JSON format as described below. 
-          Response Format:
-          {response_format}
-          
-          
-          Remember to format your response as JSON. To ensure the response can be parsed by Python json.loads, use double quotes ("") around keys and string values, and commas (,) to separate items in arrays and objects. IMPORTANT: When embedding a JSON string within another JSON string, always escape double quotes. For example, use \" instead of ". This applies to keys and string values in your JSON. Incorrect formatting will result in an error.
-        """
-
         super_agi_prompt = PromptReader.read_agent_prompt(__file__, "superagi.txt")
 
         super_agi_prompt = AgentPromptBuilder.clean_prompt(super_agi_prompt).replace("{response_format}",
@@ -113,24 +81,7 @@ class AgentPromptBuilder:
 
     @classmethod
     def start_task_based(cls):
-<<<<<<< HEAD
         super_agi_prompt = PromptReader.read_agent_prompt(__file__, "initialize_tasks.txt")
-=======
-        super_agi_prompt = """You are a task-generating AI known as SuperAGI. You are not a part of any system or device. Your role is to understand the GOALS presented to you, identify important components, review the instructions provided by the user and construct a thorough execution plan.
-        
-        GOALS:
-        {goals}
-
-        {task_instructions}
-
-        Construct a sequence of actions, not exceeding 3 steps, to achieve this goal.
-                
-        Example: ["{{TASK-1}}", "{{TASK-2}}"].
-
-        Remember to format your response as JSON, using double quotes ("") around keys and string values, and commas (,) to separate items in arrays and objects. When embedding a JSON string within another JSON string, ALWAYS escape double quotes (e.g. use \" instead of ".) This applies to keys and string values in your JSON.
-
-        """
->>>>>>> 9af19f93 (Here we go...)
 
         return {"prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt), "variables": ["goals", "instructions"]}
         # super_agi_prompt = super_agi_prompt.replace("{goals}", AgentPromptBuilder.add_list_items_to_string(goals))
@@ -140,41 +91,7 @@ class AgentPromptBuilder:
         constraints = [
             'Exclusively use the tools listed in double quotes e.g. "tool name"'
         ]
-<<<<<<< HEAD
         super_agi_prompt = PromptReader.read_agent_prompt(__file__, "analyse_task.txt")
-=======
-        super_agi_prompt = """
-        High level goal: 
-        {goals}
-
-        {task_instructions}
-        
-        Your Current Task: `{current_task}`
-        
-        Task History:
-        `{task_history}`
-        
-        Based on this, your job is to understand the current task, pick out key parts, and think smart and fast. 
-        Explain why you are doing each action, create a plan, and mention any worries you might have. 
-        Ensure next action TOOL is picked from the below TOOL list. 
-        
-        TOOLS:
-        {tools}
-        
-        RESPONSE FORMAT:
-        {
-            "thoughts": {
-                "reasoning": "reasoning"
-            },
-            "tool": {"name": "tool name", "args": {"arg name": "string value"}}
-        }
-        
-        Your answer must be something that JSON.parse() can read, and nothing else.
-        Always escape double quotes when embedding a JSON string within another JSON string. 
-
-        """
-
->>>>>>> 9af19f93 (Here we go...)
         super_agi_prompt = AgentPromptBuilder.clean_prompt(super_agi_prompt) \
             .replace("{constraints}", AgentPromptBuilder.add_list_items_to_string(constraints))
         return {"prompt": super_agi_prompt, "variables": ["goals", "instructions", "tools", "current_task"]}
@@ -182,55 +99,14 @@ class AgentPromptBuilder:
     @classmethod
     def create_tasks(cls):
         # just executed task `{last_task}` and got the result `{last_task_result}`
-<<<<<<< HEAD
         super_agi_prompt = PromptReader.read_agent_prompt(__file__, "create_tasks.txt")
-=======
-        super_agi_prompt = """
-        You are an AI assistant to create task.
-        
-        High level GOAL:
-        {goals}
-
-        {task_instructions}
-        
-        You have following incomplete tasks `{pending_tasks}`. You have following completed tasks `{completed_tasks}`.
-        
-        Task History:
-        `{task_history}`
-         
-        Based on this, create a single task to be completed by your AI system ONLY IF REQUIRED to get closer to or fully reach your high level goal.
-        Don't create any task if it is already covered in incomplete or completed tasks.
-        Ensure your new task are not deviated from completing the goal.
-         
-        Your answer should be an array of strings that can be used with JSON.parse(). Remember to use double quotes ("") around keys and string values, and commas (,) to separate items in arrays and objects. If a JSON object is being used as a string in another JSON object, you need to escape the double quotes. Return empty array if no new task is required.
-        """
->>>>>>> 9af19f93 (Here we go...)
         return {"prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt),
                 "variables": ["goals", "instructions", "last_task", "last_task_result", "pending_tasks"]}
 
     @classmethod
     def prioritize_tasks(cls):
         # just executed task `{last_task}` and got the result `{last_task_result}`
-<<<<<<< HEAD
         super_agi_prompt = PromptReader.read_agent_prompt(__file__, "prioritize_tasks.txt")
-=======
-        super_agi_prompt = """
-            You are a task prioritization AI assistant. 
-
-            High level goal:
-            {goals}
-
-            {task_instructions}
-
-            You have following incomplete tasks `{pending_tasks}`. You have following completed tasks `{completed_tasks}`.
-
-            Based on this, evaluate the incomplete tasks and sort them in the order of execution. In output first task will be executed first and so on.
-            Remove if any tasks are unnecessary or duplicate incomplete tasks. Remove tasks if they are already covered in completed tasks.
-            Remove tasks if it does not help in achieving the main goal.
-
-            Your answer should be an array of strings that can be used with JSON.parse(). Remember to use double quotes ("") around keys and string values, and commas (,) to separate items in arrays and objects. To use a JSON object as a string in another JSON object, you need to escape the double quotes. Return empty array if no new task is required.
-            """
->>>>>>> 9af19f93 (Here we go...)
         return {"prompt": AgentPromptBuilder.clean_prompt(super_agi_prompt),
                 "variables": ["goals", "instructions", "last_task", "last_task_result", "pending_tasks"]}
 

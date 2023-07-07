@@ -10,7 +10,7 @@ Task History:
 
 Based on this, your job is to understand the current task, pick out key parts, and think smart and fast.
 Explain why you are doing each action, create a plan, and mention any worries you might have.
-Ensure next action tool is picked from the below tool list.
+Ensure next action TOOL is picked from the list below.
 
 TOOLS:
 {tools}
@@ -23,4 +23,4 @@ RESPONSE FORMAT:
     "tool": {"name": "tool name", "args": {"arg name": "string value"}}
 }
 
-Your answer must be something that JSON.parse() can read, and nothing else.
+Your answer must be something that JSON.parse() can read, and nothing else. Remember to always escape double quotes when embedding a JSON string within another JSON string.
