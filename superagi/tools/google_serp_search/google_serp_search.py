@@ -19,8 +19,8 @@ class GoogleSerpSearchSchema(BaseModel):
         description="Google news search using serper API",
     )
 
-class GoogleSerpSearchTool(BaseTool):
-    name = "GoogleSerpSearchTool"
+class GoogleSerpTool(BaseTool):
+    name = "GoogleSerpTool"
     description = "Perform a general Google search using the GoogleSerp API. Input should be a search query."    
     news_description = "Perform a Google news search using the GoogleSerp API. Input should be a search query."
         
