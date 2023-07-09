@@ -8,7 +8,7 @@ import os
 
 import json5 as json 
 
-class GoogleSerpSearchSchema(BaseModel):
+class GoogleSerpSchema(BaseModel):
     query: str = Field(
         ...,
         description="Google general search using serper API",
@@ -20,11 +20,11 @@ class GoogleSerpSearchSchema(BaseModel):
     )
 
 class GoogleSerpTool(BaseTool):
-    name = "GoogleSerpTool"
+    llm: Optional[BaseLlm] = None
+    name = "GoogleSerp"
     description = "Perform a general Google search using the GoogleSerp API. Input should be a search query."    
-    news_description = "Perform a Google news search using the GoogleSerp API. Input should be a search query."
-        
-    args_schema: Type[GoogleSerpSearchSchema] = GoogleSerpSearchSchema    
+    news_description = "Perform a Google news search using the GoogleSerp API. Input should be a search query."     
+    args_schema: Type[GoogleSerpSchema] = GoogleSerpSchema    
     
         
     def general_search(self, query: str) -> tuple:

@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, NamedTuple
 from superagi.helper.json_cleaner import JsonCleaner
 from superagi.lib.logger import logger
+from fake_useragent import UserAgent
+
 
 
 class AgentGPTAction(NamedTuple):

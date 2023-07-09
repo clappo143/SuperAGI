@@ -1,10 +1,12 @@
 import random
-from typing import List
+from typing import List, Dict
 import httpx
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
 from superagi.lib.logger import logger
 import time
+from fake_useragent import UserAgent
+import json
 
 searx_hosts = [
     "https://searx.catfluori.de/",
@@ -19,16 +21,6 @@ searx_hosts = [
 ]
 
 class SearchResult(BaseModel):
-    """
-    Represents a single search result from Searx
-
-    Attributes:
-        id : The ID of the search result.
-        title : The title of the search result.
-        link : The link of the search result.
-        description : The description of the search result.
-        sources : The sources of the search result.
-    """
     id: int
     title: str
     link: str
@@ -36,58 +28,37 @@ class SearchResult(BaseModel):
     sources: List[str]
 
     def __str__(self):
-        return f"""{self.id}. {self.title} - {self.link} 
-{self.description}"""
+        return f"{self.id}. {self.title} - {self.link}\n{self.description}"
 
-def search(query: str, language: str) -> str:
-    """
-    Perform a search query using Searx search engine.
-
-    Args:
-        query (str): The search query.
-        language (str): The language of the search query as a two-letter code; e.g. Hindi = hi.
-
-    Returns:
-        The response text from the search request.
-    """
-    random.shuffle(searx_hosts)  # Randomize the order of instances
+def search_results(query: str, language: str) -> str:
+    ua = UserAgent()
+    random.shuffle(searx_hosts)
     for searx_url in searx_hosts:
         res = httpx.get(
             searx_url + "/search",
             params={"q": query, "language": language},
-            headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/114.0"},
+            headers={"User-Agent": ua.random},
         )
-        time.sleep(2)  # delay before the next request
+        time.sleep(2)
         if res.status_code == 200:
-            return res.text
+            results = scrape_results(res.text)
+            if results:
+                snippets = [str(result) for result in results]
+                links = [result['link'] for result in results]
+                output_dict = {"snippets": snippets, "links": links}
+                return json.dumps(output_dict)
+            else:
+                empty_output_dict = {"snippets": [], "links": []}
+                return json.dumps(empty_output_dict)
         else:
             logger.info(res.status_code, searx_url)
 
     raise Exception("All Searx instances returned non-200 status codes")
 
-
 def clean_whitespace(s: str):
-    """
-    Cleans up whitespace in a string
-
-    Args:
-        s : The string to clean up.
-
-    Returns:
-        The cleaned up string.
-    """
     return " ".join(s.split())
 
 def scrape_results(html: str) -> List[SearchResult]:
-    """
-    Converts raw HTML into a list of SearchResult objects
-
-    Args:
-        html : The raw HTML to convert.
-
-    Returns:
-        A list of SearchResult objects.
-    """
     soup = BeautifulSoup(html, "html.parser")
     result_divs = soup.find_all(attrs={"class": "result"})
     
@@ -129,13 +100,3 @@ def scrape_results(html: str) -> List[SearchResult]:
         n += 1
 
     return result_list
-
-def search_results(query, language):
-    '''Returns a dictionary with "snippets" and "links" as keys'''
-    results = scrape_results(search(query, language))
-    if results:
-        snippets = [str(result) for result in results]
-        links = [result['link'] for result in results]
-        return {"snippets": snippets, "links": links}
-    else:
-        return {"snippets": [], "links": []}

@@ -1,6 +1,7 @@
 from typing import Type, Optional
+import re  # Import the 're' module for regular expressions
 from pydantic import BaseModel, Field
-from superagi.llms.base_llm import BaseLlm  
+from superagi.llms.base_llm import BaseLlm
 from superagi.tools.base_tool import BaseTool
 from superagi.tools.searx.search_scraper import search, search_results, scrape_results
 
@@ -10,80 +11,97 @@ class SearxSearchSchema(BaseModel):
     query: str = Field(
         ...,
         description="The search query for the Searx search engine.",
-    )  
+    )
     language: str = Field(
-        ...,  
+        ...,
         description=LANGUAGE_DESC)
 
-class SearxSearchTool(BaseTool):    
+class SearxSearchTool(BaseTool):
     ...
-    
-    def _execute(self, query: str, language: str) -> tuple: 
-        response = search_results(query, language)
-        
-    llm: Optional[BaseLlm] = None
-    name = "SearxSearch"
-    description = (
-        "A tool for performing a Searx search and extracting snippets and webpages."
-        "Input should be a search query. Language (en, de etc) to be provided in language field"
-    )
-    args_schema: Type[SearxSearchSchema] = SearxSearchSchema
+    # Add caching
+    cache = {}
 
-    class Config:
-        arbitrary_types_allowed = True
+    def extract_author(self, snippet):  # Add 'self' argument
+        byline = None
+        for line in snippet.split("\n"):
+            if "by" in line.lower() or "written by" in line.lower():
+                byline = line
+                break
+        if byline:
+            return byline.replace("By ", "").replace("Written by ", "")
+        return ""
 
-    
-    def search_results(self, query):
-        results = scrape_results(search(query))
-        snippets = [str(result) for result in results]
-        links = [result['link'] for result in results]
-        return {"snippets": snippets, "links": links}
+    # Add the 'extract_date' method here
+    def extract_date(self, snippet: str) -> Optional[str]:
+        date_pattern = r"\b\d{4}-\d{2}-\d{2}\b"
+        match = re.search(date_pattern, snippet)
+        if match:
+            return match.group(0)
+        return None
 
-    def _execute(self, query: str, language: str) -> tuple: 
-        response = search_results(query, language)
-        summary, links = self.summarise_result(query, response["snippets"], response["links"])
-        if len(links) > 0: 
-            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])   
+    def _execute(self, query: str, language: str) -> tuple:
+        # Check cache first
+        if query in self.cache:
+            response = self.cache[query]
+        else:
+            try:
+                response = search_results(query, language, limit=5)
+                # Add to cache
+                self.cache[query] = response
+            except Exception as e:
+                # Handle exception
+                print(f"Error accessing Searx API: {e}")
+                return "Error accessing Searx search engine. Please try again later."
+
+        summarize_prompt = """Review the following text `{snippets}` and links:
+                {links}
+                - A) Provide a summarized list of the results: `{snippets}` 
+                  Include Titles, Author/Publication, Date, and URL.
+
+                - B) Provide a brief summary of the collective results and their relevance to the task. Evaluate the `{query}` and suggest possible improvements.
+
+                ---
+                EXAMPLE RESPONSE:
+                A)
+                - Title: How to Bake Chocolate Chip Cookies
+                - Author: Betty Crocker
+                - Date: 24 March 2019
+                - Publication: AllRecipes
+                - URL: https://www.allrecipes.com/recipe/9956/best-chocolate-chip-cookies/
+
+                [Summary of link content]
+
+                - Title: The Science of Baking the Perfect Cookie
+                - Date: 3 May 2020
+                - Publication: The New York Times
+                - URL: https://www.nytimes.com/2020/05/03/dining/science-perfect-chocolate-chip-cookie.html
+
+                [Summary of link content]
+
+                B)
+                The results were mainly related to baking and thus not very relevant to our use case about a criminal nicknamed 'cookie'. The current `{query}` is suboptimal and needs refinement. We should consider adding exclusionary operators/clauses (e.g. `cookie -baking -recipe`) for more focused and relevant results. Alternatively, we could try using a different TOOL.
+                """
+
+        summary, links = self.summarise_result(query, response["snippets"], response["links"][:3])
+        if links:
+            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links)
         return summary
 
-    def summarise_result(self, query, snippets, links):
-        summarize_prompt = """Review the following text `{snippets}`and links:
-        {links}
-        - A) Provide a summarised list of the results:
-        `{snippets}` 
-        Include Titles, Author/Publication, Date and URL. 
-        
-        - B) Provide a concise summary of the collective results and their relevance to the task. Evaluate the performance of the`{query}` and consider possible imporovements.
-        
-        ---
-        EXAMPLE RESPONSE: 
-        [Summary of key snippets]
-        
-        A) 
-        - Title: How to Bake Chocolate Chip Cookies  
-        - Author: Betty Crocker
-        - Date: 24 March 2019
-        - Publication: AllRecipes
-        - URL: https://www.allrecipes.com/recipe/9956/best-chocolate-chip-cookies/
-        
-        [Summary of link content] 
-        
-        - Title: The Science of Baking the Perfect Cookie
-        - Date: 3 May 2020
-        - Publication: The New York Times
-        - URL: https://www.nytimes.com/2020/05/03/dining/science-perfect-chocolate-chip-cookie.html
-        
-        [Summary of link content]
-        
-        B)
-        The results were mainly related to baking and thus not very relevant to our use case about a criminal nicknamed 'cookie'. The current `{query}` is thus suboptimal and needs refinement. We should consider adding exclusionary operators/clauses (e.g. `cookie -baking -recipe`) for more focussed and relevant results. Alertnatively, we could try using a different TOOL.
-        """
+    def summarise_result(self, query, snippets, links):  # This is where 'snippets' and 'links' are defined
+        results = []
 
-        summarize_prompt = summarize_prompt.replace("{snippets}", str(snippets))
-        summarize_prompt = summarize_prompt.replace("{query}", query)
-        summarize_prompt = summarize_prompt.replace("{links}", str(links))
+        for snippet, link in zip(snippets, links):
+            # Add more metadata
+            result = {
+                "title": snippet.split("\n")[0],
+                "content": snippet,
+                "link": link,
+                "date": self.extract_date(snippet),  # Add logic to extract date
+                "author": self.extract_author(snippet)  # Call 'extract_author' with 'self'
+            }
+            results.append(result)
 
-        messages = [{"role": "system", "content": summarize_prompt}]
-        result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)
-        return result["content"], links 
-    
+        # Use extractive summarization to generate summary
+        summary = " ".join(result["title"] for result in results[:3])
+
+        return summary, links[:3]
