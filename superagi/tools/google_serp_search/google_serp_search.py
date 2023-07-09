@@ -8,73 +8,63 @@ import os
 
 import json5 as json 
 
-
-class GoogleSerpSchema(BaseModel):
+class GoogleSerpSearchSchema(BaseModel):
     query: str = Field(
         ...,
-        description="The search (_execute) or news (news_execute) query for Google SERP.",
+        description="Google general search using serper API",
     )
 
-
-'''Google search (_execute) and news (news_execute) using serper.dev. Use server.dev api keys'''
-class GoogleSerpTool(BaseTool):
-    """
-    Google Search tool
-
-    Attributes:
-        name : The name.
-        description : The description.
-        args_schema : The args schema.
-    """
-    llm: Optional[BaseLlm] = None
-    name = "GoogleSerp"
-    description = (
-        "A tool for performing a Google SERP search and extracting snippets and webpages."
-        "It can also fetch news results related to a given query."
-        "Input should be a search query."
+    news_query: str = Field(
+        ...,
+        description="Google news search using serper API",
     )
 
-    args_schema: Type[GoogleSerpSchema] = GoogleSerpSchema
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    def _execute(self, query: str) -> tuple:
-        """
-        Execute the Google search tool.
-
-        Args:
-            query : The query to search for.
-
-        Returns:
-            Search result summary along with related links
-        """
+class GoogleSerpSearchTool(BaseTool):
+    name = "GoogleSerpSearchTool"
+    description = "Perform a general Google search using the GoogleSerp API. Input should be a search query."    
+    news_description = "Perform a Google news search using the GoogleSerp API. Input should be a search query."
+        
+    args_schema: Type[GoogleSerpSearchSchema] = GoogleSerpSearchSchema    
+    
+        
+    def general_search(self, query: str) -> tuple:
         api_key = self.get_tool_config("SERP_API_KEY")
         serp_api = GoogleSerpApiWrap(api_key)
         response = serp_api.search_run(query)
+        
+        # Call summarise_result with the appropriate arguments
         summary, links = self.summarise_result(query, response["snippets"], response["links"])
+        
         if len(links) > 0: 
             return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])   
         return summary
 
-    def news_execute(self, query: str) -> tuple:
+    def news_search(self, news_query: str) -> tuple:
         api_key = self.get_tool_config("SERP_API_KEY")
         serp_api = GoogleSerpApiWrap(api_key)
-        response = serp_api.news_run(query)
-        summary, links = self.summarise_result(query, response["snippets"], response["links"])
+        response = serp_api.news_run(news_query)
+        
+        # Call summarise_result with the appropriate arguments
+        summary, links = self.summarise_result(news_query, response["snippets"], response["links"])
+        
         if len(links) > 0:
             return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3]) 
-        return summary
-
-    def summarise_result(self, query, snippets, links):
-        summarize_prompt = """Review the following text `{snippets}`and links:
+        return summary     
+          
+    def summarise_result(self, query, snippets, links):  
+        summarize_prompt ="""Review the following text `{snippets}`and links:
         {links}
-        - A) Provide a summarised list of the results, including Titles, Author or Publication, Date and URL. 
-        - B) Write a concise or as descriptive as necessary summary and attempt to
-            answer the query: `{query}` as best as possible based on the snippets and links.
+        - A) Provide a summarised list of the results:
+        `{snippets}` 
+        Include Titles, Author/Publication, Date and URL. 
+        
+        - B) Provide a concise summary of the collective results and their relevance to the task. Evaluate the performance of the`{query}` and consider possible imporovements.
+        
+        ---
         EXAMPLE RESPONSE: 
         [Summary of key snippets]
         
+        A) 
         - Title: How to Bake Chocolate Chip Cookies  
         - Author: Betty Crocker
         - Date: 24 March 2019
@@ -90,12 +80,21 @@ class GoogleSerpTool(BaseTool):
         
         [Summary of link content]
         
-        In summary, based on the Google search results, snippets and links, to bake chocolate chip cookies...  """
+        B)
+        The results were mainly related to baking and thus not very relevant to our use case about a criminal nicknamed 'cookie'. The current `{query}` is thus suboptimal and needs refinement. We should consider adding exclusionary operators/clauses (e.g. `cookie -baking -recipe`) for more focussed and relevant results. Alertnatively, we could try using a different TOOL.
+        """
 
         summarize_prompt = summarize_prompt.replace("{snippets}", str(snippets))
-        summarize_prompt = summarize_prompt.replace("{query}", query)
-        summarize_prompt = summarize_prompt.replace("{links}", str(links))
-
+        summarize_prompt = summarize_prompt.replace("{links}", "\n".join(links))
+        
         messages = [{"role": "system", "content": summarize_prompt}]
         result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)
-        return result["content"], links 
+
+        # Prepare the result dictionary
+        result_dict = {
+                "summary": result["content"],
+                "links": links[:3]
+        }
+
+        # Return the result dictionary as a JSON string
+        return json.dumps(result_dict, indent=4)

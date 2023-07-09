@@ -1,5 +1,4 @@
 import urllib.parse
-import json
 from typing import Type, Optional
 from datetime import datetime
 import requests
@@ -29,11 +28,6 @@ class WebScraperSchema(BaseModel):
         None,
         description="Optional end date for date range search. Format: MM/DD/YYYY",
     )
-    fields_to_extract: Optional[list[str]] = Field(
-        None,
-        description="Optional list of fields to extract from the webpage. Can include 'title', 'text', 'author', etc.",
-    )
-
 
 class WebScraperTool(BaseTool):
     """
@@ -75,45 +69,15 @@ class WebScraperTool(BaseTool):
         base_url = "https://www.bing.com/search?q="
         return self.generate_search_url(base_url, query, site)
 
-    def extract_field_from_html(self, field, soup):
-        if field == "title":
-            return soup.title.text if soup.title else None
-
-        if field == "text":
-            paragraphs = [p.text for p in soup.find_all('p')]
-            return ' '.join(paragraphs)
-
-        if field == "author":
-            author_div = soup.find("div", class_="author")
-            return author_div.text if author_div else None
-
-        if field == "article_info":
-            headline = soup.find("h1").text if soup.find("h1") else None
-            publisher = soup.find("div", class_="publisher").text if soup.find("div", class_="publisher") else None
-            publication_date = soup.find("time")["datetime"] if soup.find("time") else None
-            summary = soup.find("div", class_="summary").text[:300] if soup.find("div", class_="summary") else None
-
-            return {
-                "Headline": headline,
-                "Publisher": publisher, 
-                "Date": publication_date,
-                "Summary": summary
-            }
-
-        # Add more fields as needed....
-
-        return None
-
-    def _execute(self, website_url: str, site: str = None, start_date: str = None, end_date: str = None, fields_to_extract: list[str] = None) -> str:
+    def _execute(self, website_url: str, site: str = None, start_date: str = None, end_date: str = None) -> tuple:
         """
         Execute the Web Scraper tool.
 
         Args:
         website_url : The website url to scrape or a search query.
-        fields_to_extract : A list of fields to extract from the webpage.
 
         Returns:
-        A JSON string containing the extracted data.
+        The text content of the website or search results.
         """
         # Check if the website_url is a valid URL
         try:
@@ -129,9 +93,7 @@ class WebScraperTool(BaseTool):
         try:
             content = WebpageExtractor().extract_with_bs4(website_url)
         except Exception as e:
-            return json.dumps({"error": f"Failed to extract content from {website_url}: {e}"})
+            return f"Failed to extract content from {website_url}: {e}"
 
-        soup = BeautifulSoup(content, "html.parser")
-        data = {field: self.extract_field_from_html(field, soup) for field in fields_to_extract}
-
-        return json.dumps(data, indent=4)
+        max_length = len(' '.join(content.split(" ")[:600]))
+        return content[:max_length]
