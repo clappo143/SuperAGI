@@ -24,7 +24,9 @@ class GoogleSerpTool(BaseTool):
     name = "GoogleSerp"
     description = "Perform a general Google search using the GoogleSerp API. Input should be a search query."    
     news_description = "Perform a Google news search using the GoogleSerp API. Input should be a search query."     
-    args_schema: Type[GoogleSerpSchema] = GoogleSerpSchema    
+    args_schema: Type[GoogleSerpSchema] = GoogleSerpSchema
+    class Config:
+        arbitrary_types_allowed = True
     
         
     def general_search(self, query: str) -> tuple:
