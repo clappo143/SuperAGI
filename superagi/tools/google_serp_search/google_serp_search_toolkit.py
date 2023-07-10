@@ -9,7 +9,7 @@ class GoogleSerpToolkit(BaseToolkit, ABC):
     description: str = "Toolkit containing tools for performing Google SERP search and extracting snippets and webpages"
 
     def get_tools(self) -> List[BaseTool]:
-        return [GoogleSerpTool()]
+        return [GoogleSerpTool()]  # Add GoogleSerpTool to the list of tools
 
     def get_env_keys(self) -> List[str]:
         return [

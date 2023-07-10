@@ -149,6 +149,7 @@ def update_base_tool_class_info(classes, file_name, folder_name, session, tool_n
 
 
 def init_toolkits(code_link, existing_toolkits, folder_path, organisation, session):
+    print(f"Code link: {code_link}") #added for dedbugging 10 July
     tool_name_to_toolkit = {}
     new_toolkits = []
     # Iterate over all subfolders
