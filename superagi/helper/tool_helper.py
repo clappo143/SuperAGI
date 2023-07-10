@@ -97,6 +97,7 @@ def get_tool_info(class_dict, classes, obj):
     class_dict['tool_name'] = obj.name
     class_dict['tool_description'] = obj.description
     classes.append(class_dict)
+    print(f"Generated tool: {obj.name} - {obj.description}") #Added 10 July for debugging
 
 
 def get_toolkit_info(class_dict, classes, obj):
