@@ -19,12 +19,23 @@ class GoogleSerpSchema(BaseModel):
         description="Google news search using serper API",
     )
 
+'''Google search (general_search) and news (news_search) using serper.dev. Use server.dev api keys'''
 class GoogleSerpTool(BaseTool):
+    """
+    Google Serp Search tool
+
+    Attributes:
+        name : The name.
+        description : The description.
+        args_schema : The args schema.
+    """
     llm: Optional[BaseLlm] = None
     name = "GoogleSerp"
     description = "Perform a general Google search using the GoogleSerp API. Input should be a search query."
     news_description = "Perform a Google news search using the GoogleSerp API. Input should be a search query."
+    
     args_schema: Type[GoogleSerpSchema] = GoogleSerpSchema
+    
     class Config:
         arbitrary_types_allowed = True
 
