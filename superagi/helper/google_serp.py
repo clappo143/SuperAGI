@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, List
+from typing import Any, List, Dict, Union
 
 import aiohttp
 
@@ -8,7 +8,7 @@ from superagi.helper.webpage_extractor import WebpageExtractor
 
 
 class GoogleSerpApiWrap:
-    def __init__(self, api_key, num_results=10, num_pages=1, num_extracts=3):
+    def __init__(self, api_key, num_results=7, num_pages=1, num_extracts=3):
         """
         Initialize the GoogleSerpApiWrap class.
 
@@ -24,13 +24,18 @@ class GoogleSerpApiWrap:
         self.num_extracts = num_extracts
         self.extractor = WebpageExtractor()
 
-    def search_run(self, query):
-        results = asyncio.run(self.fetch_serper_results(query=query, search_type="search"))
-        response = self.process_response(results)
-        return response
+    def run(self, query: str, search_type: str = 'search') -> Dict[str, Union[str, List[str]]]:
+        """
+        Run the Google search or news search.
 
-    def news_run(self, query):
-        results = asyncio.run(self.fetch_serper_results(query=query, search_type="news"))
+        Args:
+            query (str): The query to search for.
+            search_type (str): The type of search to perform (search or news).
+
+        Returns:
+            dict: A dictionary with 'links' and 'snippets' keys containing the search results.
+        """
+        results = asyncio.run(self.fetch_serper_results(query=query, search_type=search_type))
         response = self.process_response(results)
         return response
 
@@ -60,7 +65,7 @@ class GoogleSerpApiWrap:
                 search_results = await response.json()
                 return search_results
 
-    def process_response(self, results) -> str:
+    def process_response(self, results) -> Dict[str, Union[str, List[str]]]:
         """
         Process the search results.
 
@@ -68,7 +73,7 @@ class GoogleSerpApiWrap:
             results (dict): The search results.
 
         Returns:
-            str: The processed search results.
+            dict: A dictionary with 'links' and 'snippets' keys containing the processed search results.
         """
         snippets: List[str] = []
         links: List[str] = []
