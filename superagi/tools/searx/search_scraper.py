@@ -1,24 +1,26 @@
 import random
-from typing import List
+from typing import List, Dict
 import httpx
 from bs4 import BeautifulSoup
 from pydantic import BaseModel
 from superagi.lib.logger import logger
+import time
+from fake_useragent import UserAgent
+import json
 
-
-searx_hosts = ["https://search.ononoki.org", "https://searx.be", "https://search.us.projectsegfau.lt"]
+searx_hosts = [
+    "https://searx.catfluori.de/",
+    "https://search.mdosch.de/",
+    "https://darmarit.org/searx/",
+    "https://xo.wtf/",
+    "https://search.rowie.at/",
+    "https://searx.namejeff.xyz/",
+    "https://search.demoniak.ch/",
+    # Add more instances here e.g. https://search.im-in.space/; https://search.kiwitalk.de/ ;  https://searx.mha.fi/ (See: https://searx.space/)
+    # (GPT-4 25 June) # These instances have high TLS and CSP ratings, support HTML responses, use well-known certificate authorities, have high uptime percentages, and relatively low response times.
+]
 
 class SearchResult(BaseModel):
-    """
-    Represents a single search result from Searx
-
-    Attributes:
-        id : The ID of the search result.
-        title : The title of the search result.
-        link : The link of the search result.
-        description : The description of the search result.
-        sources : The sources of the search result.
-    """
     id: int
     title: str
     link: str
@@ -26,50 +28,37 @@ class SearchResult(BaseModel):
     sources: List[str]
 
     def __str__(self):
-        return f"""{self.id}. {self.title} - {self.link} 
-{self.description}"""
+        return f"{self.id}. {self.title} - {self.link}\n{self.description}"
 
-def search(query):
-    """
-    Gets the raw HTML of a searx search result page
+def search_results(query: str, language: str) -> str:
+    ua = UserAgent()
+    random.shuffle(searx_hosts)
+    for searx_url in searx_hosts:
+        res = httpx.get(
+            searx_url + "/search",
+            params={"q": query, "language": language},
+            headers={"User-Agent": ua.random},
+        )
+        time.sleep(2)
+        if res.status_code == 200:
+            results = scrape_results(res.text)
+            if results:
+                snippets = [str(result) for result in results]
+                links = [result['link'] for result in results]
+                output_dict = {"snippets": snippets, "links": links}
+                return json.dumps(output_dict)
+            else:
+                empty_output_dict = {"snippets": [], "links": []}
+                return json.dumps(empty_output_dict)
+        else:
+            logger.info(res.status_code, searx_url)
 
-    Args:
-        query : The query to search for.
-    """
-    # TODO: use a better strategy for choosing hosts. Could use this list: https://searx.space/data/instances.json
-    searx_url = random.choice(searx_hosts)
-    res = httpx.get(
-        searx_url + "/search", params={"q": query}, headers={"User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/114.0"}
-    )
-    if res.status_code != 200:
-        logger.info(res.status_code, searx_url)
-        raise Exception(f"Searx returned {res.status_code} status code")
-
-    return res.text
+    raise Exception("All Searx instances returned non-200 status codes")
 
 def clean_whitespace(s: str):
-    """
-    Cleans up whitespace in a string
-
-    Args:
-        s : The string to clean up.
-
-    Returns:
-        The cleaned up string.
-    """
     return " ".join(s.split())
 
-
-def scrape_results(html):
-    """
-    Converts raw HTML into a list of SearchResult objects
-
-    Args:
-        html : The raw HTML to convert.
-
-    Returns:
-        A list of SearchResult objects.
-    """
+def scrape_results(html: str) -> List[SearchResult]:
     soup = BeautifulSoup(html, "html.parser")
     result_divs = soup.find_all(attrs={"class": "result"})
     
@@ -78,16 +67,20 @@ def scrape_results(html):
     for result_div in result_divs:
         if result_div is None:
             continue
-        # Needed to work on multiple versions of Searx
         header = result_div.find(["h4", "h3"])
         if header is None:
             continue
-        link = header.find("a")["href"]
+        link_element = header.find("a")
+        if link_element is None:
+            continue
+        link = link_element["href"]
         title = header.text.strip()
 
-        description = clean_whitespace(result_div.find("p").text)
+        description_element = result_div.find("p")
+        if description_element is None:
+            continue
+        description = clean_whitespace(description_element.text)
 
-        # Needed to work on multiple versions of Searx
         sources_container = result_div.find(
             attrs={"class": "pull-right"}
         ) or result_div.find(attrs={"class": "engines"}) 
@@ -96,15 +89,14 @@ def scrape_results(html):
         for s in source_spans:
             sources.append(s.text.strip())
 
-        result = SearchResult(
-            id=n, title=title, link=link, description=description, sources=sources
-        )
+        result = {
+            'id': n,
+            'title': title,
+            'link': link,
+            'description': description,
+            'sources': sources
+        }
         result_list.append(result)
         n += 1
 
     return result_list
-
-
-def search_results(query):
-    '''Returns a text summary of the search results via the SearchResult.__str__ method'''
-    return "\n\n".join(list(map(lambda x: str(x), scrape_results(search(query)))))
