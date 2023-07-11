@@ -6,23 +6,19 @@ from superagi.llms.base_llm import BaseLlm
 from superagi.tools.base_tool import BaseTool
 import os
 
-import json5 as json
+import json5 as json 
+
 
 class GoogleSerpSchema(BaseModel):
     query: str = Field(
         ...,
-        description="Google general search using serper API",
+        description="The search (_execute) or news (news_execute) query for Google SERP.",
     )
 
-    news_query: str = Field(
-        ...,
-        description="Google news search using serper API",
-    )
-
-'''Google search (general_search) and news (news_search) using serper.dev. Use server.dev api keys'''
+'''Google search (_execute) and news (news_execute) using serper.dev. Use server.dev api keys'''
 class GoogleSerpTool(BaseTool):
     """
-    Google Serp Search tool
+    Google Search tool
 
     Attributes:
         name : The name.
@@ -31,45 +27,45 @@ class GoogleSerpTool(BaseTool):
     """
     llm: Optional[BaseLlm] = None
     name = "GoogleSerp"
-    description = "Perform a general Google search using the GoogleSerp API. Input should be a search query."
-    news_description = "Perform a Google news search using the GoogleSerp API. Input should be a search query."
-    
+    description = (
+        "A tool for performing a Google SERP search and extracting snippets and webpages."
+        "It can also fetch news results related to a given query."
+        "Input should be a search query."
+    )
+
     args_schema: Type[GoogleSerpSchema] = GoogleSerpSchema
-    
+
     class Config:
         arbitrary_types_allowed = True
 
-    def general_search(self, query: str) -> tuple:
+    def _execute(self, query: str) -> tuple:
+        """
+        Execute the Google search tool.
+
+        Args:
+            query : The query to search for.
+
+        Returns:
+            Search result summary along with related links
+        """
         api_key = self.get_tool_config("SERP_API_KEY")
         serp_api = GoogleSerpApiWrap(api_key)
-        response = serp_api.run(query)
-
-        # Call summarise_result with the appropriate arguments
-        summary, links = self.summarise_result(query, response["snippets"], response["links"], search_type='general')
-
-        if len(links) > 0:
-            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])
+        response = serp_api.search_run(query)
+        summary, links = self.summarise_result(query, response["snippets"], response["links"])
+        if len(links) > 0: 
+            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])   
         return summary
 
-    def news_search(self, news_query: str) -> tuple:
+    def news_execute(self, query: str) -> tuple:
         api_key = self.get_tool_config("SERP_API_KEY")
         serp_api = GoogleSerpApiWrap(api_key)
-        response = serp_api.run(news_query, search_type='news')
-
-        # Call summarise_result with the appropriate arguments
-        summary, links = self.summarise_result(news_query, response["snippets"], response["links"], search_type='news')
-
+        response = serp_api.news_run(query)
+        summary, links = self.summarise_result(query, response["snippets"], response["links"])
         if len(links) > 0:
-            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3])
+            return summary + "\n\nLinks:\n" + "\n".join("- " + link for link in links[:3]) 
         return summary
 
-    def summarise_result(self, query, snippets, links, search_type='general'):
-        # Modify the prompt to indicate the search type
-        if search_type == 'general':
-            search_type_text = "general search"
-        else:
-            search_type_text = "news search"
-
+    def summarise_result(self, query, snippets, links):
         summarize_prompt = """Review the following text `{snippets}`and links:
         {links}
         - A) Provide a summarised list of the results:
@@ -103,16 +99,9 @@ class GoogleSerpTool(BaseTool):
         """
 
         summarize_prompt = summarize_prompt.replace("{snippets}", str(snippets))
-        summarize_prompt = summarize_prompt.replace("{links}", "\n".join(links))
+        summarize_prompt = summarize_prompt.replace("{query}", query)
+        summarize_prompt = summarize_prompt.replace("{links}", str(links))
 
         messages = [{"role": "system", "content": summarize_prompt}]
         result = self.llm.chat_completion(messages, max_tokens=self.max_token_limit)
-
-        # Prepare the result dictionary
-        result_dict = {
-            "summary": result["content"],
-            "links": links[:3]
-        }
-
-        # Return the result dictionary as a JSON string
-        return json.dumps(result_dict, indent=4)
+        return result["content"], links 
