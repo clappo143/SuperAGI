@@ -46,7 +46,6 @@ S3 = "S3"
 
 engine = connect_db()
 Session = sessionmaker(bind=engine)
-session = Session()
 
 
 class SuperAgi:
@@ -57,6 +56,7 @@ class SuperAgi:
                  memory: VectorStore,
                  tools: List[BaseTool],
                  agent_config: Any,
+                 agent_execution_config: Any,
                  output_parser: BaseOutputParser = AgentOutputParser(),
                  ):
         self.ai_name = ai_name
@@ -67,6 +67,7 @@ class SuperAgi:
         self.output_parser = output_parser
         self.tools = tools
         self.agent_config = agent_config
+        self.agent_execution_config = agent_execution_config
         # Init Log
         # print("\033[92m\033[1m" + "\nWelcome to SuperAGI - The future of AGI" + "\033[0m\033[0m")
 
@@ -88,16 +89,10 @@ class SuperAgi:
             tools=tools
         )
 
-    def fetch_agent_feeds(self, session, agent_execution_id, agent_id):
-        memory_window = session.query(AgentConfiguration).filter(
-            AgentConfiguration.key == "memory_window",
-            AgentConfiguration.agent_id == agent_id
-        ).order_by(desc(AgentConfiguration.updated_at)).first().value
-
+    def fetch_agent_feeds(self, session, agent_execution_id):
         agent_feeds = session.query(AgentExecutionFeed.role, AgentExecutionFeed.feed) \
             .filter(AgentExecutionFeed.agent_execution_id == agent_execution_id) \
             .order_by(asc(AgentExecutionFeed.created_at)) \
-            .limit(memory_window) \
             .all()
         return agent_feeds[2:]
 
@@ -120,8 +115,7 @@ class SuperAgi:
         task_queue = TaskQueue(str(agent_execution_id))
 
         token_limit = TokenCounter.token_limit()
-        agent_feeds = self.fetch_agent_feeds(session, self.agent_config["agent_execution_id"],
-                                             self.agent_config["agent_id"])
+        agent_feeds = self.fetch_agent_feeds(session, self.agent_config["agent_execution_id"])
         current_calls = 0
         if len(agent_feeds) <= 0:
             task_queue.clear_tasks()
@@ -163,9 +157,9 @@ class SuperAgi:
         response = self.llm.chat_completion(messages, token_limit - current_tokens)
         current_calls = current_calls + 1
         total_tokens = current_tokens + TokenCounter.count_message_tokens(response, self.llm.get_model())
-        self.update_agent_execution_tokens(current_calls, total_tokens)
+        self.update_agent_execution_tokens(current_calls, total_tokens,session)
 
-        if response['content'] is None:
+        if 'content' not in response or response['content'] is None:
             raise RuntimeError(f"Failed to get response from llm")
         assistant_reply = response['content']
 
@@ -179,7 +173,7 @@ class SuperAgi:
             session.commit()
 
             # check if permission is required for the tool in restricted mode
-            is_permission_required, response = self.check_permission_in_restricted_mode(assistant_reply)
+            is_permission_required, response = self.check_permission_in_restricted_mode(assistant_reply, session)
             if is_permission_required:
                 return response
 
@@ -272,7 +266,7 @@ class SuperAgi:
         logger.info("Tool Response : " + str(output) + "\n")
         return output
 
-    def update_agent_execution_tokens(self, current_calls, total_tokens):
+    def update_agent_execution_tokens(self, current_calls, total_tokens, session):
         agent_execution = session.query(AgentExecution).filter(
             AgentExecution.id == self.agent_config["agent_execution_id"]).first()
         agent_execution.num_of_calls += current_calls
@@ -286,7 +280,7 @@ class SuperAgi:
         if len(pending_tasks) > 0 or len(completed_tasks) > 0:
             add_finish_tool = False
 
-        prompt = AgentPromptBuilder.replace_main_variables(prompt, self.agent_config["goal"], self.agent_config["instruction"],
+        prompt = AgentPromptBuilder.replace_main_variables(prompt, self.agent_execution_config["goal"], self.agent_execution_config["instruction"],
                                                            self.agent_config["constraints"], self.tools, add_finish_tool)
 
         response = task_queue.get_last_task_details()
@@ -304,7 +298,7 @@ class SuperAgi:
                                                                  pending_tasks, completed_tasks, token_limit)
         return prompt
 
-    def check_permission_in_restricted_mode(self, assistant_reply: str):
+    def check_permission_in_restricted_mode(self, assistant_reply: str, session):
         action = self.output_parser.parse(assistant_reply)
         tools = {t.name: t for t in self.tools}
 
