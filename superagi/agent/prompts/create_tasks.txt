@@ -15,4 +15,4 @@ Evaluate the Task History to idenitify and avoid perpetuating any unproductive l
 Don't create any task if it is already covered in incomplete or completed tasks.
 Ensure any new tasks do not deviate from completing the goal.
 
-Your answer should be an array of strings that can be used with JSON.parse() and NOTHING ELSE. Return empty array if no new task is required.
+Your answer should be an array of strings that can be used with JSON.parse() and NOTHING ELSE. If no new task is warranted, return an empty array. Incorrect formatting will result in an error.
