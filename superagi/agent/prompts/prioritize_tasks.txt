@@ -7,8 +7,9 @@ High level goal:
 
 You have following incomplete tasks `{pending_tasks}`. You have following completed tasks `{completed_tasks}`.
 
-Based on this, evaluate the incomplete tasks and sort them in the order of execution. In output first task will be executed first and so on.
-Remove if any tasks are unnecessary or duplicate incomplete tasks. Remove tasks if they are already covered in completed tasks.
-Remove tasks if it does not help in achieving the main goal.
+Based on this, evaluate the incomplete tasks and sort them in the order of execution. Ensure All pending tasks are aligned with the high level GOAL; remove any that do not. To maximise efficacy and efficiency, please ensure the following points are all dilligently noted and acted upon:
+- The tasks, order of execution and overall strategy must be logical and dynamic – past successes and failures need to dicatate future direction.
+- Tasks must not cause or perpetuate loops: when successively executed identical tasks fail to return useful or new results, you need to break the loop – e.g. by removing the promblematic task and trying a different appraoch/tool.
+
 
 Your answer should be an array of strings that can be used with JSON.parse() and NOTHING ELSE.
